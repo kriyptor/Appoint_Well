@@ -4,14 +4,17 @@ const db = require(`./Utils/database`);
 const bodyParser = require(`body-parser`);
 const jwt = require('jsonwebtoken'); 
 
-const Users = require(`./Models/usersModel`);
-const Reviews = require(`./Models/reviewsModel`);
-const Staff = require(`./Models/staffsModel`);
-const Services = require(`./Models/servicesModel`);
-const Appointments = require(`./Models/appointmentsModel`);
-const StaffService = require(`./Models/staffServiceModel`);
-const { request } = require('http');
-const userRouter = require(`./Routes/users-router`);
+const Users = require(`./Models/users-model`);
+const Reviews = require(`./Models/reviews-model`);
+const Staff = require(`./Models/staffs-model`);
+const Services = require(`./Models/services-model`);
+const Appointments = require(`./Models/appointments-model`);
+const StaffService = require(`./Models/staff-service-model`);
+const UserWallet = require(`./Models/user-wallet-model`);
+const authRouter = require(`./Routes/auth-router`);
+const serviceRouter = require(`./Routes/service-router`);
+const appointmentRouter = require(`./Routes/appointment-router`);
+const staffRouter = require(`./Routes/staff-router`);
 
 require('dotenv').config();
 
@@ -22,7 +25,7 @@ if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || 
     process.exit(1);
   }
 
-  const app = express();
+const app = express();
 
   const corsOptions = {
       origin: "*", // Replace with your frontend URL in production 
@@ -31,12 +34,18 @@ if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || 
     };
   
   
-  app.use(cors(corsOptions));
-  app.use(bodyParser.json());
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
 
 
-  /* ----------API Routes---------- */
-  app.use(`${process.env.API_URL}/user`, userRouter);
+/* ----------API Routes---------- */
+
+app.use(`${process.env.API_URL}/auth`, authRouter);
+app.use(`${process.env.API_URL}/staff`, staffRouter);
+app.use(`${process.env.API_URL}/service`, serviceRouter);
+app.use(`${process.env.API_URL}/appointment`, appointmentRouter);
+
+
 
 /* --------------User Associations---------------- */
 
@@ -45,6 +54,9 @@ Appointments.belongsTo(Users, { foreignKey: `userId`});
 
 Users.hasMany(Reviews, { foreignKey: `userId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Users, { foreignKey: `userId` });
+
+Users.hasOne(UserWallet, { foreignKey: `userId`, onDelete: `CASCADE` });
+UserWallet.belongsTo(Users, { foreignKey: `userId` });
 
 
 
@@ -77,8 +89,9 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
 
 
-//sync the database
-db.sync(/* { force : true } */)
+/* -------Sync the database------- */
+
+db.sync({ force : true })
 .then(() => {
     console.log(`Connected with DB!`);
     app.listen(PORT, () => console.log(`Server running @ PORT:${PORT}`));

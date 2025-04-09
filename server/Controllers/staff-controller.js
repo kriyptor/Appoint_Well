@@ -1,0 +1,235 @@
+const db = require(`../Utils/database`);
+const { v4: uuidv4 } = require('uuid');
+const Services = require(`../Models/services-model`);
+const Staff = require(`../Models/staffs-model`);
+const StaffService = require(`../Models/staff-service-model`);
+
+
+exports.createStaff = async (req, res) => {
+    const transaction = await db.transaction(); 
+    try {
+        const { name, email, specializations, profilePicture, serviceIds } = req.body;
+
+        // Basic field validation
+        if (!name || !email ||
+            !Array.isArray(specializations) || specializations.length === 0 ||
+            !Array.isArray(serviceIds) || serviceIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        };
+
+
+        // Admin check
+        const adminId = req.admin.id;
+        const admin = await Users.findByPk(adminId);
+
+        if(admin.isAdmin === false){
+            return res.status(400).json({
+                success: false,
+                message: 'Only admin can create staff'
+            });
+        }
+
+        const uniqueServiceIds = [...new Set(serviceIds)];
+
+        // Create staff with conditional profilePicture
+        const staffId = uuidv4();
+        const staffData = {
+            id: staffId,
+            name,
+            email,
+            specializations
+        };
+        
+
+        //update the specific field if data is available
+        if(profilePicture) {
+            staffData.profilePicture = profilePicture;
+        }
+        
+        const newStaff = await Staff.create(staffData, { transaction });
+
+        // Create service associations using the already deduped array
+        const staffServicesMappedData = uniqueServiceIds.map(serviceId => {
+            return { staffId, serviceId }
+        });
+
+        await StaffService.bulkCreate(staffServicesMappedData, { transaction });
+
+        await transaction.commit();
+
+        return res.status(201).json({ 
+            success: true,
+            message: 'A new staff created',
+            data: newStaff
+        });
+        
+    } catch (error) {
+        await transaction.rollback(); 
+        
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+exports.getAllStaff = async (req, res) => {
+    try {
+
+        const allStaffs = await Staff.findAll();
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All Staffs',
+            data: allStaffs
+        });
+
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+exports.updateStaff = async (req, res) => {
+    const transaction = await db.transaction();
+    try {
+        const { staffId, name, email, specializations, profilePicture, serviceIds } = req.body;
+
+        // Basic field validation
+        if (!staffId || !name || !email ||
+            !Array.isArray(specializations) || specializations.length === 0 ||
+            !Array.isArray(serviceIds) || serviceIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+
+        // Admin check
+        const adminId = req.admin.id;
+        const admin = await Users.findByPk(adminId);
+
+        if(admin.isAdmin === false){
+            return res.status(400).json({
+                success: false,
+                message: 'Only admin can update staff'
+            });
+        }
+
+        // Check if staff exists
+        const existingStaff = await Staff.findByPk(staffId);
+        if (!existingStaff) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                message: 'Staff not found'
+            });
+        }
+
+        // Prepare update data
+        const updatedStaffData = {
+            name,
+            email,
+            specializations
+        };
+        
+        // Add profilePicture if provided
+        if(profilePicture) {
+            updatedStaffData.profilePicture = profilePicture;
+        }
+
+        const uniqueServiceIds = [...new Set(serviceIds)];
+
+        // Update staff data
+        await Staff.update(updatedStaffData, { 
+            where: { id: staffId }, 
+            transaction 
+        });
+
+        // For service associations, first delete existing ones
+        await StaffService.destroy({
+            where: { staffId },
+            transaction
+        });
+
+        // Then create new associations
+        const staffServicesMappedData = uniqueServiceIds.map(serviceId => ({
+            staffId,
+            serviceId
+        }));
+
+        await StaffService.bulkCreate(staffServicesMappedData, { transaction });
+
+        await transaction.commit();
+
+        // Fetch updated staff with services for response
+        const updatedStaff = await Staff.findByPk(staffId, {
+            include: [{
+                model: Services,
+                through: { attributes: [] } // exclude junction table attributes
+            }]
+        });
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'Staff data updated successfully',
+            data: updatedStaff
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.deleteStaff = async (req, res) => {
+    const transaction = await db.transaction();
+    try {
+        const staffId = req.params.id;
+
+        const staff = await Staff.findByPk(staffId);
+        if (!staff) {
+            return res.status(404).json({
+                success: false,
+                message: 'Staff not found',
+            });
+        }
+
+        await Staff.destroy({ where: { id: staffId }, transaction });
+        await StaffService.destroy({ where: { staffId: staffId }, transaction });
+
+        await transaction.commit();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Staff deleted successfully',
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message,
+        });
+    }
+};
+
+

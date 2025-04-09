@@ -1,9 +1,11 @@
+const db = require(`../Utils/database`);
+const Users = require("../Models/users-model");
+const UserWallet = require(`../Models/staffs-model`);
 const bcrypt = require(`bcrypt`);
-const Users = require("../Models/usersModel");
 const jwt = require(`jsonwebtoken`);
 const { v4: uuidv4 } = require('uuid');
-require('dotenv').config();
 const { Op } = require(`sequelize`);
+require('dotenv').config();
 
 
 function isStringInvalid(string) {
@@ -15,6 +17,7 @@ const generateAccessToken = (id, name) => {
 }
 
 exports.createUser = async (req, res) => {
+    const transaction = await db.transaction(); 
     try {
         const { name, email, phoneNumber, password } = req.body;
         
@@ -46,7 +49,14 @@ exports.createUser = async (req, res) => {
             email: email,
             phoneNumber: phoneNumber,
             password: hashedPassword,
-        });
+        }, { transaction });
+
+        await UserWallet.create({
+            id: uuidv4(),
+            userId : newId
+        }, { transaction });
+
+        await transaction.commit();
 
         return res.status(201).json({
             success: true,
@@ -54,6 +64,9 @@ exports.createUser = async (req, res) => {
         });
 
     } catch (error) {
+
+        await transaction.rollback();
+
         console.log(error);
         return res.status(500).json({ 
             success: false,
@@ -81,6 +94,108 @@ exports.loginUser = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: `User does not exist!`
+            });
+        }
+        
+        const isMatch = await bcrypt.compare(password, user.password);
+        
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: `Invalid credentials!`
+            });
+        }
+
+        const token = generateAccessToken(user.id, user.name);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token: token
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+/* --------------Admin Controller----------------- */
+
+
+exports.createAdmin = async (req, res) => {
+    try {
+        const { name, email, phoneNumber, password } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(name) || isStringInvalid(email) || isStringInvalid(password)) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+        
+
+        const isUserExist = await Users.findOne({ where: { email: email } });
+
+        if (isUserExist) {
+            return res.status(400).json({
+                success: false,
+                message: `User already exists!`
+            });
+        }
+
+        const newId = uuidv4();
+        const salt = 10;
+        const hashedPassword = await bcrypt.hash(password, salt);
+        
+        const newAdmin = await Users.create({
+            id: newId,
+            name: name,
+            email: email,
+            phoneNumber: phoneNumber,
+            password: hashedPassword,
+            isAdmin: true
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Successfully created new admin'
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.loginAdmin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(email) || isStringInvalid(password)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        const user = await Users.findOne({ where: { email: email } });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `Admin does not exist!`
             });
         }
         

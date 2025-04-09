@@ -1,7 +1,7 @@
 const Sequelize = require(`sequelize`);
 const db = require(`../Utils/database`);
 
-const Users = db.define(`Users`, {
+const StaffMember = db.define(`Staff-Members`, {
     id : {
         type :  Sequelize.STRING,
         allowNull : false,
@@ -18,28 +18,20 @@ const Users = db.define(`Users`, {
         allowNull : false
     },
 
-    phoneNumber : {
-        type : Sequelize.STRING,
-        allowNull : false
-    },
-
-    password : {
-        type : Sequelize.STRING,
-        allowNull : false
-    },
-
-    isAdmin : {
-        type :Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
+    specializations : {
+        type : Sequelize.ARRAY(Sequelize.STRING),
+        allowNull : false,
+        validate :{
+            isIn : [['hair', 'nail', 'skincare', 'makeup']]
+        }
     },
 
     profilePicture : {
         type : Sequelize.STRING,
-        allowNull: false,
+        allowNull : true,
         defaultValue: `https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg`
     },
 
 });
 
-module.exports = Users;
+module.exports = StaffMember;

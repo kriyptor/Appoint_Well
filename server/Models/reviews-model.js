@@ -13,12 +13,18 @@ const Reviews = db.define(`Reviews`, {
         allowNull : false
     },
 
-    Comment : {
+    comment : {
         type : Sequelize.TEXT,
         allowNull : true,
     },
 
-    adminResponse : {
+    isStaffResponded : {
+        type : Sequelize.BOOLEAN,
+        allowNull : false,
+        defaultValue : false
+    },
+
+    staffResponse : {
         type : Sequelize.TEXT,
         allowNull : true,
     },
