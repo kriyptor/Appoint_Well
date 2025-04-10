@@ -1,6 +1,7 @@
 const db = require(`../Utils/database`);
 const Users = require("../Models/users-model");
 const Admin = require(`../Models/admin-model`);
+const Staff = require(`../Models/staffs-model`);
 const UserWallet = require(`../Models/staffs-model`);
 const bcrypt = require(`bcrypt`);
 const jwt = require(`jsonwebtoken`);
@@ -13,8 +14,9 @@ function isStringInvalid(string) {
     return string === undefined || string.length === 0;
 }
 
-const generateAccessToken = (id, name) => {
-    return jwt.sign({ id : id,  name : name }, process.env.JWT_SECRET_KEY);
+
+const generateAccessToken = (id, name, role) => {
+    return jwt.sign({ id : id,  name : name, role : role }, process.env.JWT_SECRET_KEY);
 }
 
 exports.createUser = async (req, res) => {
@@ -107,7 +109,7 @@ exports.loginUser = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(user.id, user.name);
+        const token = generateAccessToken(user.id, user.name, 'user');
 
         return res.status(200).json({
             success: true,
@@ -209,7 +211,59 @@ exports.loginAdmin = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(admin.id, admin.name);
+        const token = generateAccessToken(admin.id, admin.name, 'admin');
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token: token
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+/* ----------------Staff auth------------------ */
+
+
+exports.loginStaff = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(email) || isStringInvalid(password)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        const staff = await Staff.findOne({ where: { email: email } });
+
+        if (!staff) {
+            return res.status(404).json({
+                success: false,
+                message: `Admin does not exist!`
+            });
+        }
+        
+        const isMatch = await bcrypt.compare(password, staff.password);
+        
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: `Invalid credentials!`
+            });
+        }
+
+        const token = generateAccessToken(staff.id, staff.name, 'staff');
 
         return res.status(200).json({
             success: true,

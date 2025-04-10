@@ -12,18 +12,19 @@ const Appointments = require(`./Models/appointments-model`);
 const StaffService = require(`./Models/staff-service-model`);
 const UserWallet = require(`./Models/user-wallet-model`);
 const authRouter = require(`./Routes/auth-router`);
+const staffRouter = require(`./Routes/staff-router`);
+const reviewRouter = require(`./Routes/review-router`);
 const serviceRouter = require(`./Routes/service-router`);
 const appointmentRouter = require(`./Routes/appointment-router`);
-const staffRouter = require(`./Routes/staff-router`);
 
 require('dotenv').config();
 
 const PORT = process.env.PORT || 4000;
 
-if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.JWT_SECRET_KEY ||!process.env.API_URL) {
-    console.error('Missing required environment variables');
-    process.exit(1);
-  }
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.JWT_SECRET_KEY || !process.env.API_URL) {
+  console.error('Missing required environment variables');
+  process.exit(1);
+}
 
 const app = express();
 
@@ -42,9 +43,9 @@ app.use(bodyParser.json());
 
 app.use(`${process.env.API_URL}/auth`, authRouter);
 app.use(`${process.env.API_URL}/staff`, staffRouter);
+app.use(`${process.env.API_URL}/review`, reviewRouter);
 app.use(`${process.env.API_URL}/service`, serviceRouter);
 app.use(`${process.env.API_URL}/appointment`, appointmentRouter);
-
 
 
 /* --------------User Associations---------------- */
@@ -87,6 +88,7 @@ Reviews.belongsTo(Services, { foreignKey: `servicesId` });
 Appointments.hasOne(Reviews, { foreignKey: `appointmentsId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
+//TODO:create admin and revenue data
 
 
 /* -------Sync the database------- */

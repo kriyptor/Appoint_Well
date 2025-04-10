@@ -9,7 +9,7 @@ const Appointments = db.define(`Appointments`, {
     },
 
     status: {
-        type: Sequelize.ENUM('scheduled', 'rescheduled', 'canceled', 'completed'),
+        type: Sequelize.ENUM('scheduled', 'rescheduled', 'canceled', 'completed', 'unattained'),
         allowNull: false,
         defaultValue: 'scheduled'
       },

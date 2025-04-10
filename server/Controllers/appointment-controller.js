@@ -1,7 +1,8 @@
 const Services = require(`../Models/services-model`);
 const Users = require(`../Models/users-model`);
+const Revenue = require(`../Models/revenue-model`);
 const Appointments = require(`../Models/appointments-model`);
-const UserWallet = require(`../Models/user-wallet-model`);
+const { timeDifferenceValidation } = require(`../Utils/time-validation`);
 const db = require(`../Utils/database`);
 const { v4: uuidv4 } = require('uuid');
 
@@ -112,6 +113,13 @@ exports.userRescheduleAppointment = async (req, res) => {
 
           //TODO: Add rescheduled mail service
 
+          if(!timeDifferenceValidation(appointment.date, appointment.startTime)){
+            return res.status(400).json({
+                success: true,
+                message: 'Appointment cannot be rescheduled at this point',
+            });
+          }
+
         appointment.status = 'rescheduled';
         appointment.date = date;
         appointment.startTime = startTime;
@@ -138,7 +146,6 @@ exports.userRescheduleAppointment = async (req, res) => {
 exports.userCancelAppointment = async (req, res) => {
     const transaction = await db.transaction();
     try {
-
         const userId = req.user.id;
         const appointmentId = req.params.id;
 
@@ -158,39 +165,64 @@ exports.userCancelAppointment = async (req, res) => {
         });
 
         if (!appointment) {
+            await transaction.rollback();
             return res.status(404).json({
                 success: false,
                 message: `No Appointment Found with id: ${appointmentId}`
             });
         }
 
+        // Expanded status validation
         if (appointment.status === 'canceled') {
+            await transaction.rollback();
             return res.status(400).json({
                 success: false,
                 message: 'Appointment is already canceled'
             });
+        } else if (['unattained', 'completed'].includes(appointment.status)) {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: `Appointment is ${appointment.status} and cannot be canceled`
+            });
         }
-
+        
+        // Update appointment status
         appointment.status = 'canceled';
         await appointment.save({ transaction });
+        
+        // Determine if refund is eligible
+        let refundStatus = "No Refund";
+    
 
-        await Users.increment('walletBalance', {
-            by: appointment.price,
-            where: { id: userId },
-            transaction
-        });
+        if(timeDifferenceValidation(appointment.date, appointment.startTime)){
+            // Process refund
+            await Users.increment('walletBalance', {
+                by: appointment.price,
+                where: { id: userId },
+                transaction
+            });
 
-        transaction.commit();
+            const revenueData = await Revenue.findByPk(1, { transaction });
+            revenueData.totalRevenue -= appointment.price;
+            revenueData.totalRefunds += appointment.price;
+            await revenueData.save({ transaction });
+            
+            refundStatus = "Refund Processed";
+        }
+
+        await transaction.commit();
 
         return res.status(200).json({
             success: true,
             message: 'Appointment canceled successfully',
+            refundStatus: refundStatus,
             data: appointment
         });
 
     } catch (error) {
-        transaction.rollback();
-        console.error(error)
+        await transaction.rollback();
+        console.error(error);
         return res.status(500).json({
             success: false,
             message: 'Internal server error',
@@ -198,6 +230,11 @@ exports.userCancelAppointment = async (req, res) => {
         });
     }
 }
+
+
+
+
+
 /* -----------Admin Appointment Controllers------------- */
 
 

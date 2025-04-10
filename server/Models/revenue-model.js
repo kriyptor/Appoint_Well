@@ -3,9 +3,10 @@ const db = require(`../Utils/database`);
 
 const Revenue = db.define(`Revenue`, {
     id : {
-        type :  Sequelize.STRING,
+        type :  Sequelize.INTEGER,
         allowNull : false,
         primaryKey: true,
+        autoIncrement: true,
     },
 
     totalRevenue : {

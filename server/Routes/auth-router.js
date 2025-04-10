@@ -1,15 +1,19 @@
 const express = require(`express`);
-const userController = require(`../Controllers/auth-controller`);
+const authController = require(`../Controllers/auth-controller`);
 const router = express.Router();
 
+/* ------------User Auth Routes-------------- */
+router.post('/user/sign-in', authController.loginUser);
 
-router.post('/user/sign-in', userController.loginUser);
+router.post('/user/sign-up', authController.createUser);
 
-router.post('/user/sign-up', userController.createUser);
+/* ------------Admin Auth Routes-------------- */
+router.post('/admin/sign-in', authController.loginAdmin);
 
-router.post('/admin/sign-in', userController.loginAdmin);
+router.post('/admin/sign-up', authController.createAdmin);
 
-router.post('/admin/sign-up', userController.createAdmin);
+/* ------------Staff Auth Routes-------------- */
+router.post('/staff/sign-in', authController.loginStaff);
 
 
 module.exports = router;
