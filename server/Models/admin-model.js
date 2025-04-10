@@ -1,7 +1,7 @@
 const Sequelize = require(`sequelize`);
 const db = require(`../Utils/database`);
 
-const Users = db.define(`Users`, {
+const Admin = db.define(`Admin`, {
     id: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -29,12 +29,6 @@ const Users = db.define(`Users`, {
         defaultValue: `https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg`
     },
 
-    walletBalance: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0
-    }
-
 });
 
-module.exports = Users;
+module.exports = Admin;

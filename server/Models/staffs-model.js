@@ -1,7 +1,7 @@
 const Sequelize = require(`sequelize`);
 const db = require(`../Utils/database`);
 
-const StaffMember = db.define(`Staff-Members`, {
+const Staffs = db.define(`Staff-Members`, {
     id : {
         type :  Sequelize.STRING,
         allowNull : false,
@@ -16,6 +16,11 @@ const StaffMember = db.define(`Staff-Members`, {
     email : {
         type : Sequelize.STRING,
         allowNull : false
+    },
+
+    password: {
+        type: Sequelize.STRING,
+        allowNull: false
     },
 
     specializations : {
@@ -34,4 +39,4 @@ const StaffMember = db.define(`Staff-Members`, {
 
 });
 
-module.exports = StaffMember;
+module.exports = Staffs;

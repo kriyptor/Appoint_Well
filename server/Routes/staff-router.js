@@ -1,16 +1,16 @@
 const express = require(`express`);
 const staffController = require(`../Controllers/staff-controller`);
-const { adminAuthenticate } = require(`../Middleware/admin-auth`);
+const { authenticate } = require(`../Middleware/role-auth`);
 const router = express.Router();
 
 /* -------Admin Routes-------- */
 
-router.post('/all-staff', adminAuthenticate, staffController.getAllStaff);
+router.post('/all-staff', authenticate(['admin']), staffController.getAllStaff);
 
-router.post('/create', adminAuthenticate, staffController.createStaff);
+router.post('/create', authenticate(['admin']), staffController.createStaff);
 
-router.patch('/:id', adminAuthenticate, staffController.updateStaff);
+router.patch('/:id', authenticate(['admin']), staffController.updateStaff);
 
-router.delete('/:id', adminAuthenticate, staffController.deleteStaff);
+router.delete('/:id', authenticate(['admin']), staffController.deleteStaff);
 
 module.exports = router;

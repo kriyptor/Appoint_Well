@@ -1,25 +1,24 @@
 const express = require(`express`);
 const appointmentController = require(`../Controllers/appointment-controller`);
-const { userAuthenticate } = require(`../Middleware/user-auth`);
-const { adminAuthenticate } = require(`../Middleware/admin-auth`);
+const { authenticate } = require(`../Middleware/role-auth`);
 const router = express.Router();
 
 /* ---------User Routes--------- */
 
-router.post('/create', userAuthenticate, appointmentController.userCreateAppointment);
+router.post('/create', authenticate(['user']), appointmentController.userCreateAppointment);
 
-router.get('/user', userAuthenticate, appointmentController.getAllUserAppointments);
+router.get('/user', authenticate(['user']), appointmentController.getAllUserAppointments);
 
-router.patch('/:id/reschedule', userAuthenticate, appointmentController.userRescheduleAppointment);
+router.patch('/:id/reschedule', authenticate(['user']), appointmentController.userRescheduleAppointment);
 
-router.patch('/:id/cancel', userAuthenticate, appointmentController.userCancelAppointment);
+router.patch('/:id/cancel', authenticate(['user']), appointmentController.userCancelAppointment);
 
 /* -------Admin Routes-------- */
 
-router.get('/admin', adminAuthenticate, appointmentController.getAllAppointments);
+router.get('/admin', authenticate(['admin']), appointmentController.getAllAppointments);
 
-router.patch('/:id/reschedule/admin', adminAuthenticate, appointmentController.adminRescheduleAppointment);
+router.patch('/:id/reschedule/admin', authenticate(['admin']), appointmentController.adminRescheduleAppointment);
 
-router.patch('/:id/cancel/admin', adminAuthenticate, appointmentController.adminCancelAppointment);
+router.patch('/:id/cancel/admin', authenticate(['admin']), appointmentController.adminCancelAppointment);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const db = require(`../Utils/database`);
 const Users = require("../Models/users-model");
+const Admin = require(`../Models/admin-model`);
 const UserWallet = require(`../Models/staffs-model`);
 const bcrypt = require(`bcrypt`);
 const jwt = require(`jsonwebtoken`);
@@ -13,7 +14,7 @@ function isStringInvalid(string) {
 }
 
 const generateAccessToken = (id, name) => {
-    return jwt.sign({ userId : id,  name : name }, process.env.JWT_SECRET_KEY);
+    return jwt.sign({ id : id,  name : name }, process.env.JWT_SECRET_KEY);
 }
 
 exports.createUser = async (req, res) => {
@@ -190,16 +191,16 @@ exports.loginAdmin = async (req, res) => {
             });
         }
 
-        const user = await Users.findOne({ where: { email: email } });
+        const admin = await Admin.findOne({ where: { email: email } });
 
-        if (!user) {
+        if (!admin) {
             return res.status(404).json({
                 success: false,
                 message: `Admin does not exist!`
             });
         }
         
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, admin.password);
         
         if (!isMatch) {
             return res.status(401).json({
@@ -208,7 +209,7 @@ exports.loginAdmin = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(user.id, user.name);
+        const token = generateAccessToken(admin.id, admin.name);
 
         return res.status(200).json({
             success: true,
