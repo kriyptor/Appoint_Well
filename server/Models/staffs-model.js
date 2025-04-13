@@ -24,16 +24,21 @@ const Staffs = db.define(`Staff-Members`, {
     },
 
     specializations : {
-        type : Sequelize.ARRAY(Sequelize.STRING),
+        type : Sequelize.JSON,
         allowNull : false,
-        validate :{
-            isIn : [['hair', 'nail', 'skincare', 'makeup']]
+        validate: {
+            isValidSpecialization(value) {
+                const validOptions = ['hair', 'nail', 'skincare', 'makeup'];
+                if (!Array.isArray(value) || !value.every(item => validOptions.includes(item))) {
+                    throw new Error('Invalid specialization provided');
+                }
+            }
         }
     },
 
     profilePicture : {
-        type : Sequelize.STRING,
-        allowNull : true,
+        type : Sequelize.TEXT,
+        allowNull : false,
         defaultValue: `https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg`
     },
 

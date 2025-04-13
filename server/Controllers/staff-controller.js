@@ -2,16 +2,17 @@ const db = require(`../Utils/database`);
 const { v4: uuidv4 } = require('uuid');
 const Services = require(`../Models/services-model`);
 const Staff = require(`../Models/staffs-model`);
+const { generatePassword } = require(`../Utils/utility-functions`);
 const StaffService = require(`../Models/staff-service-model`);
 
 
 exports.createStaff = async (req, res) => {
     const transaction = await db.transaction(); 
     try {
-        const { name, email, specializations, profilePicture, serviceIds } = req.body;
+        const { name, specializations, profilePicture, serviceIds } = req.body;
 
         // Basic field validation
-        if (!name || !email ||
+        if (!name ||
             !Array.isArray(specializations) || specializations.length === 0 ||
             !Array.isArray(serviceIds) || serviceIds.length === 0) {
             return res.status(400).json({
@@ -20,27 +21,19 @@ exports.createStaff = async (req, res) => {
             });
         };
 
-
-        // Admin check
-        const adminId = req.admin.id;
-        const admin = await Users.findByPk(adminId);
-
-        if(admin.isAdmin === false){
-            return res.status(400).json({
-                success: false,
-                message: 'Only admin can create staff'
-            });
-        }
-
         const uniqueServiceIds = [...new Set(serviceIds)];
 
         // Create staff with conditional profilePicture
         const staffId = uuidv4();
+        const staffEmail = `${name}.staff@appointwell.com`;
+        const staffPassword = generatePassword(name); //TODO: send it over email and hash it then save 
+
         const staffData = {
             id: staffId,
-            name,
-            email,
-            specializations
+            name : name,
+            email : staffEmail,
+            password : staffPassword,
+            specializations : specializations
         };
         
 
@@ -102,7 +95,7 @@ exports.getAllStaff = async (req, res) => {
 }
 
 
-exports.updateStaff = async (req, res) => {
+/* exports.updateStaff = async (req, res) => {
     const transaction = await db.transaction();
     try {
         const { staffId, name, email, specializations, profilePicture, serviceIds } = req.body;
@@ -117,19 +110,9 @@ exports.updateStaff = async (req, res) => {
             });
         }
 
-        // Admin check
-        const adminId = req.admin.id;
-        const admin = await Users.findByPk(adminId);
-
-        if(admin.isAdmin === false){
-            return res.status(400).json({
-                success: false,
-                message: 'Only admin can update staff'
-            });
-        }
-
         // Check if staff exists
         const existingStaff = await Staff.findByPk(staffId);
+        
         if (!existingStaff) {
             await transaction.rollback();
             return res.status(404).json({
@@ -197,7 +180,9 @@ exports.updateStaff = async (req, res) => {
             error: error.message
         });
     }
-}
+} */
+
+
 
 exports.deleteStaff = async (req, res) => {
     const transaction = await db.transaction();

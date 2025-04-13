@@ -6,8 +6,6 @@ exports.createService = async (req, res) => {
     try {
         const { title, duration, price, category, description, serviceImage } = req.body;
         
-        const adminId = req.user.id
-
         if(!title || !duration || !price || !category){
             return res.status(400).json({
                 success: false,
@@ -15,37 +13,20 @@ exports.createService = async (req, res) => {
             });
         };
 
-        const admin = await Users.findByPk(adminId);
-
-        if(admin.isAdmin === false){
-            return res.status(400).json({
-                success: false,
-                message: 'Only admin can create services'
-            });
+        const newServiceData = {
+            id: uuidv4(),
+            title: title,
+            duration: duration,
+            price: price,
+            category: category,
+            description: description || `Service for ${category}`
         }
-
-        let newService;
 
         if(serviceImage){
-            newService = await Services.create({
-                id: uuidv4(),
-                title: title,
-                duration: duration,
-                price: price,
-                category: category,
-                description: description || `Service for ${category}`,
-                serviceImage: serviceImage,
-            })
-        }else{
-            newService = await Services.create({
-                id: uuidv4(),
-                title: title,
-                duration: duration,
-                price: price,
-                category: category,
-                description: description || `Service for ${category}`,
-            })
+            newServiceData.serviceImage = serviceImage;
         }
+
+        const newService = await Services.create(newServiceData);
         
         return res.status(201).json({ 
             success: true,
@@ -63,7 +44,7 @@ exports.createService = async (req, res) => {
     }
 }
 
-
+//TODO:Implement pagination
 exports.getAllService = async (req, res) => {
     try {
 
@@ -88,23 +69,33 @@ exports.getAllService = async (req, res) => {
 
 exports.getSingleService = async (req, res) => {
     try {
-
         const serviceId = req.params.id;
 
-        const servicesData = await Services.findAll({ where : { id : serviceId } });
+        if (!serviceId) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Invalid service ID',
+            });
+        }
+        const servicesData = await Services.findOne({ where: { id: serviceId } });
 
+        if (!servicesData) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'No Service exists',
+            });
+        }
         return res.status(200).json({ 
             success: true,
-            message: 'Here is list of all services',
-            data: servicesData
+            message: 'Here is the service',
+            data: servicesData,
         });
-        
     } catch (error) {
         console.log(error);
         return res.status(500).json({ 
             success: false,
             message: 'Internal server error',
-            error: error.message
+            error: error.message,
         });
     }
 }
@@ -112,10 +103,7 @@ exports.getSingleService = async (req, res) => {
 
 exports.updateService = async (req, res) => {
     try {
-
         const { serviceId, title, duration, price, category, description, serviceImage } = req.body;
-        
-        const adminId = req.user.id
 
         if(!title || !duration || !price || !category){
             return res.status(400).json({
@@ -124,36 +112,21 @@ exports.updateService = async (req, res) => {
             });
         };
 
-        const admin = await Users.findByPk(adminId);
+        const existingService = await Services.findByPk(serviceId);
 
-        if(admin.isAdmin === false){
-            return res.status(400).json({
-                success: false,
-                message: 'Only admin can create services'
-            });
-        }
-
-        let updatedService;
+        const updatedService = {
+            title: title,
+            duration: duration,
+            price: price,
+            category: category,
+            description: description || `Service for ${category}`
+        };
 
         if(serviceImage){
-            updatedService = await Services.update({
-                title: title,
-                duration: duration,
-                price: price,
-                category: category,
-                description: description || `Service for ${category}`,
-                serviceImage: serviceImage,
-            }, { where : { id: serviceId } })
-        }else{
-            updatedService = await Services.update({
-                title: title,
-                duration: duration,
-                price: price,
-                category: category,
-                description: description || `Service for ${category}`,
-            }, { where : { id: serviceId } })
+            updatedService.serviceImage = serviceImage;
         }
 
+        updatedService = await Services.update(updatedService, { where : { id: serviceId } })
 
         return res.status(200).json({ 
             success: true,
@@ -175,31 +148,22 @@ exports.updateService = async (req, res) => {
 
 exports.deleteService = async (req, res) => {
     try {
-        const adminId = req.user.id;
-
         const serviceId = req.params.id;
+        const deletedCount = await Services.destroy({ where: { id: serviceId } });
 
-        const admin = await Users.findByPk(adminId);
-
-        if(admin.isAdmin === false){
-            return res.status(400).json({
+        if (deletedCount === 0) {
+            return res.status(404).json({
                 success: false,
-                message: 'Only admin can delete a service'
+                message: 'No Service exists',
             });
         }
-
-        const deletedService = await Services.destroy({ where : { id: serviceId } });
-
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true,
             message: 'Service is deleted',
-            data: deletedService
         });
-
-
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
             message: 'Internal server error',
             error: error.message

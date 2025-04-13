@@ -4,18 +4,22 @@ const db = require(`./Utils/database`);
 const bodyParser = require(`body-parser`);
 const jwt = require('jsonwebtoken'); 
 
+const Admin = require(`./Models/admin-model`);
 const Users = require(`./Models/users-model`);
-const Reviews = require(`./Models/reviews-model`);
 const Staff = require(`./Models/staffs-model`);
+const Reviews = require(`./Models/reviews-model`);
+const Revenue = require(`./Models/revenue-model`);
 const Services = require(`./Models/services-model`);
 const Appointments = require(`./Models/appointments-model`);
 const StaffService = require(`./Models/staff-service-model`);
-const UserWallet = require(`./Models/user-wallet-model`);
+
 const authRouter = require(`./Routes/auth-router`);
 const staffRouter = require(`./Routes/staff-router`);
 const reviewRouter = require(`./Routes/review-router`);
 const serviceRouter = require(`./Routes/service-router`);
+const paymentRouter = require(`./Routes/payment-router`);
 const appointmentRouter = require(`./Routes/appointment-router`);
+
 
 require('dotenv').config();
 
@@ -44,6 +48,7 @@ app.use(bodyParser.json());
 app.use(`${process.env.API_URL}/auth`, authRouter);
 app.use(`${process.env.API_URL}/staff`, staffRouter);
 app.use(`${process.env.API_URL}/review`, reviewRouter);
+app.use(`${process.env.API_URL}/payment`, paymentRouter);
 app.use(`${process.env.API_URL}/service`, serviceRouter);
 app.use(`${process.env.API_URL}/appointment`, appointmentRouter);
 
@@ -55,10 +60,6 @@ Appointments.belongsTo(Users, { foreignKey: `userId`});
 
 Users.hasMany(Reviews, { foreignKey: `userId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Users, { foreignKey: `userId` });
-
-Users.hasOne(UserWallet, { foreignKey: `userId`, onDelete: `CASCADE` });
-UserWallet.belongsTo(Users, { foreignKey: `userId` });
-
 
 
 /* --------------Staff Associations---------------- */
@@ -90,10 +91,29 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
 //TODO:create admin and revenue data
 
+/* async function createData() {
+  await Admin.create({
+    id: 127,
+    name : 'shivi',
+    email: 'shivi.admin@appointwell.com',
+    password: 'shivi#admin@27'
+  })
+  
+  await Revenue.create({
+    totalRevenue : 12000,
+    hairServiceRevenue : 5000,
+    nailServiceRevenue : 2000,
+    skincareServiceRevenue : 3000,
+    makeupServiceRevenue : 2000,
+    totalRefunds : 0
+  })
+}
+
+createData() */
 
 /* -------Sync the database------- */
 
-db.sync({ force : true })
+db.sync(/* { force : true } */)
 .then(() => {
     console.log(`Connected with DB!`);
     app.listen(PORT, () => console.log(`Server running @ PORT:${PORT}`));

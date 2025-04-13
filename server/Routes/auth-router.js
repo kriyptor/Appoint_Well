@@ -10,8 +10,6 @@ router.post('/user/sign-up', authController.createUser);
 /* ------------Admin Auth Routes-------------- */
 router.post('/admin/sign-in', authController.loginAdmin);
 
-router.post('/admin/sign-up', authController.createAdmin);
-
 /* ------------Staff Auth Routes-------------- */
 router.post('/staff/sign-in', authController.loginStaff);
 

@@ -2,7 +2,6 @@ const db = require(`../Utils/database`);
 const Users = require("../Models/users-model");
 const Admin = require(`../Models/admin-model`);
 const Staff = require(`../Models/staffs-model`);
-const UserWallet = require(`../Models/staffs-model`);
 const bcrypt = require(`bcrypt`);
 const jwt = require(`jsonwebtoken`);
 const { v4: uuidv4 } = require('uuid');
@@ -20,7 +19,6 @@ const generateAccessToken = (id, name, role) => {
 }
 
 exports.createUser = async (req, res) => {
-    const transaction = await db.transaction(); 
     try {
         const { name, email, phoneNumber, password } = req.body;
         
@@ -32,7 +30,6 @@ exports.createUser = async (req, res) => {
             });
         }
         
-
         const isUserExist = await Users.findOne({ where: { email: email } });
 
         if (isUserExist) {
@@ -46,20 +43,15 @@ exports.createUser = async (req, res) => {
         const salt = 10;
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        const newUser = await Users.create({
+        const newUser = {
             id: newId,
             name: name,
             email: email,
             phoneNumber: phoneNumber,
             password: hashedPassword,
-        }, { transaction });
-
-        await UserWallet.create({
-            id: uuidv4(),
-            userId : newId
-        }, { transaction });
-
-        await transaction.commit();
+        }
+        
+        await Users.create(newUser);
 
         return res.status(201).json({
             success: true,
@@ -67,9 +59,6 @@ exports.createUser = async (req, res) => {
         });
 
     } catch (error) {
-
-        await transaction.rollback();
-
         console.log(error);
         return res.status(500).json({ 
             success: false,
@@ -129,57 +118,6 @@ exports.loginUser = async (req, res) => {
 
 
 /* --------------Admin Controller----------------- */
-
-
-exports.createAdmin = async (req, res) => {
-    try {
-        const { name, email, phoneNumber, password } = req.body;
-        
-        // Validate inputs
-        if (isStringInvalid(name) || isStringInvalid(email) || isStringInvalid(password)) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required'
-            });
-        }
-        
-
-        const isUserExist = await Users.findOne({ where: { email: email } });
-
-        if (isUserExist) {
-            return res.status(400).json({
-                success: false,
-                message: `User already exists!`
-            });
-        }
-
-        const newId = uuidv4();
-        const salt = 10;
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        const newAdmin = await Users.create({
-            id: newId,
-            name: name,
-            email: email,
-            phoneNumber: phoneNumber,
-            password: hashedPassword,
-            isAdmin: true
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: 'Successfully created new admin'
-        });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ 
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-}
 
 exports.loginAdmin = async (req, res) => {
     try {
@@ -250,13 +188,13 @@ exports.loginStaff = async (req, res) => {
         if (!staff) {
             return res.status(404).json({
                 success: false,
-                message: `Admin does not exist!`
+                message: `Staff does not exist!`
             });
         }
         
-        const isMatch = await bcrypt.compare(password, staff.password);
+        //const isMatch = await bcrypt.compare(password, staff.password);
         
-        if (!isMatch) {
+        if (staff.password!==password) {
             return res.status(401).json({
                 success: false,
                 message: `Invalid credentials!`

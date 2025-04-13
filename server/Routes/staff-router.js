@@ -5,11 +5,11 @@ const router = express.Router();
 
 /* -------Admin Routes-------- */
 
-router.post('/all-staff', authenticate(['admin']), staffController.getAllStaff);
+router.get('/all-staff', authenticate(['admin']), staffController.getAllStaff);
 
 router.post('/create', authenticate(['admin']), staffController.createStaff);
 
-router.patch('/:id', authenticate(['admin']), staffController.updateStaff);
+/* router.patch('/:id', authenticate(['admin']), staffController.updateStaff); */
 
 router.delete('/:id', authenticate(['admin']), staffController.deleteStaff);
 

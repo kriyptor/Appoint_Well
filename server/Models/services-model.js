@@ -34,8 +34,8 @@ const Services = db.define(`Services`, {
     },
 
     serviceImage : {
-        type : Sequelize.STRING,
-        allowNull : true,
+        type : Sequelize.TEXT,
+        allowNull : false,
         defaultValue: `https://naomisheadmasters.com/wp-content/uploads/2023/12/Top-10-Salons-In-Himachal-Pradesh1.jpg`
     },
 
