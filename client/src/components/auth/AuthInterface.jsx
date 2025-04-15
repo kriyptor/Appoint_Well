@@ -12,6 +12,7 @@ function AuthInterface() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   
   const { login, signup, authError } = useAuth();
   const navigate = useNavigate();
@@ -25,20 +26,17 @@ function AuthInterface() {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (isSignUp) {
-      // Handle sign up
-      const success = signup(name, email, password);
+      const success = await signup(name, email, password, phoneNumber);
       if (success) {
         navigate('/dashboard');
       }
     } else {
-      // Handle sign in
-      const success = login(email, password, role);
+      const success = await login(email, password, role);
       if (success) {
-        // Redirect based on role
         switch(role) {
           case 'admin':
             navigate('/admin-dashboard');
@@ -55,16 +53,16 @@ function AuthInterface() {
 
   return (
     <Container className="d-flex justify-content-center align-items-center mt-5">
-      <Card style={{ width: '400px' }}>
+      <Card style={{ width: "400px" }}>
         <Card.Body>
           {/* Dynamic title based on mode */}
           <Card.Title className="text-center text-uppercase">
-            {isSignUp ? 'Sign Up as User' : 'Sign In'}
+            {isSignUp ? "Sign Up as User" : "Sign In"}
           </Card.Title>
-          
+
           {/* Display auth errors */}
           {authError && <Alert variant="danger">{authError}</Alert>}
-          
+
           <Form onSubmit={handleSubmit}>
             {/* Name field (only for sign-up) */}
             {isSignUp && (
@@ -79,7 +77,7 @@ function AuthInterface() {
                 />
               </Form.Group>
             )}
-            
+
             {/* Role selection (only for sign-in) */}
             {!isSignUp && (
               <Form.Group controlId="formRole" className="mb-3">
@@ -95,7 +93,7 @@ function AuthInterface() {
                 </Form.Control>
               </Form.Group>
             )}
-            
+
             {/* Email field (common to both) */}
             <Form.Group controlId="formEmail" className="mb-3">
               <Form.Label>Email</Form.Label>
@@ -107,7 +105,21 @@ function AuthInterface() {
                 required
               />
             </Form.Group>
-            
+
+            {/* Role selection (only for sign-Up) */}
+            {isSignUp && (
+              <Form.Group controlId="formPhoneNumber" className="mb-3">
+                <Form.Label>Phone Number</Form.Label>
+                <Form.Control
+                  type="number"
+                  placeholder="Enter your Phone Number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </Form.Group>
+            )}
+
             {/* Password field (common to both) */}
             <Form.Group controlId="formPassword" className="mb-3">
               <Form.Label>Password</Form.Label>
@@ -119,10 +131,10 @@ function AuthInterface() {
                 required
               />
             </Form.Group>
-            
+
             {/* Submit button */}
             <Button variant="primary" type="submit" className="w-100">
-              {isSignUp ? 'Sign Up' : 'Sign In'}
+              {isSignUp ? "Sign Up" : "Sign In"}
             </Button>
           </Form>
 
@@ -130,15 +142,27 @@ function AuthInterface() {
           <div className="text-center mt-3">
             {isSignUp ? (
               <span>
-                Already have an account?{' '}
-                <Button variant="link" onClick={() => { setIsSignUp(false); resetForm(); }}>
+                Already have an account?{" "}
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setIsSignUp(false);
+                    resetForm();
+                  }}
+                >
                   Sign In
                 </Button>
               </span>
             ) : (
               <span>
-                Don't have an account?{' '}
-                <Button variant="link" onClick={() => { setIsSignUp(true); resetForm(); }}>
+                Don't have an account?{" "}
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setIsSignUp(true);
+                    resetForm();
+                  }}
+                >
                   Sign Up
                 </Button>
               </span>

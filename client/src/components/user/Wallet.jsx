@@ -1,56 +1,76 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, ListGroup } from 'react-bootstrap';
-import mockApi from '../../mockData';
+import { Form, Button, Spinner, Modal } from 'react-bootstrap';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
-const Wallet = () => {
-  const [balance, setBalance] = useState(0);
-  const [amount, setAmount] = useState('');
-  const [transactions, setTransactions] = useState([]);
 
-  useEffect(() => {
-    const fetchWallet = async () => {
-      const res = await mockApi.getWallet();
-      setBalance(res.balance);
-      setTransactionalData(res.transactions);
+function Wallet() {
+  const { modalShow, setModalShow, authToken } = useAuth();
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/payment/user/wallet-balance`, {
+          headers: {
+            Authorization: authToken,
+          },
+        });
+        
+        setWalletBalance(response.data.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching wallet balance:', error);
+      }
     };
-    fetchWallet();
-  }, []);
 
-  const handleAddMoney = async () => {
-    await mockApi.addMoney({ amount: parseFloat(amount) });
-    const res = await mockApi.getWallet();
-    setBalance(res.balance);
-    setTransactions(res.transactions);
-    setAmount('');
+    fetchWalletBalance();
+  }, [authToken]);
+
+  const refreshWalletBalance = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${BASE_URL}/payment/user/wallet-balance`, {
+        headers: {
+          Authorization: authToken,
+        },
+      });
+      
+      setWalletBalance(response.data.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    }
   };
 
   return (
-    <div>
-      <h2>Wallet</h2>
-      <p>Balance: ${balance}</p>
-      <Form>
-        <Form.Group>
-          <Form.Label>Add Money</Form.Label>
-          <Form.Control
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </Form.Group>
-        <Button className="mt-2" onClick={handleAddMoney}>
-          Add
-        </Button>
-      </Form>
-      <h3>Transaction History</h3>
-      <ListGroup>
-        {transactions.map((t, i) => (
-          <ListGroup.Item key={i}>
-            ${t.amount} on {new Date(t.date).toLocaleString()}
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
-    </div>
+    <Modal
+      show={modalShow}
+      onHide={() => setModalShow(false)}
+      size="md"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered
+    >
+      <Modal.Header closeButton>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Your Wallet
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Balance: {loading ? <Spinner animation="border" /> : `₹${walletBalance}`}
+        </Modal.Title>{" "}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button /* onClick={} */ variant='success'>Add Money</Button>
+        <Button onClick={refreshWalletBalance} variant='warning'>Refresh</Button>
+        <Button onClick={() => setModalShow(false)} variant='danger'>Close</Button>
+      </Modal.Footer>
+    </Modal>
   );
-};
+}
 
 export default Wallet;
+

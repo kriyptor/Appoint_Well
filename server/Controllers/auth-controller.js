@@ -10,13 +10,16 @@ require('dotenv').config();
 
 
 function isStringInvalid(string) {
-    return string === undefined || string.length === 0;
+  return string === undefined || string.length === 0;
 }
 
 
-const generateAccessToken = (id, name, role) => {
-    return jwt.sign({ id : id,  name : name, role : role }, process.env.JWT_SECRET_KEY);
-}
+const generateAccessToken = (id, name, role, email) => {
+  return jwt.sign(
+    { id: id, name: name, email: email, role: role },
+    process.env.JWT_SECRET_KEY
+  );
+};
 
 exports.createUser = async (req, res) => {
     try {
@@ -98,7 +101,7 @@ exports.loginUser = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(user.id, user.name, 'user');
+        const token = generateAccessToken(user.id, user.name, 'user', user.email);
 
         return res.status(200).json({
             success: true,
@@ -149,7 +152,7 @@ exports.loginAdmin = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(admin.id, admin.name, 'admin');
+        const token = generateAccessToken(admin.id, admin.name, 'admin', admin.email);
 
         return res.status(200).json({
             success: true,
@@ -201,7 +204,7 @@ exports.loginStaff = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(staff.id, staff.name, 'staff');
+        const token = generateAccessToken(staff.id, staff.name, 'staff', staff.email);
 
         return res.status(200).json({
             success: true,

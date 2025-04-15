@@ -1,5 +1,9 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
+
 
 // Predefined users for testing
 const predefinedUsers = [
@@ -11,75 +15,113 @@ const predefinedUsers = [
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Initialize auth state from localStorage if available
-  const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
+  const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [modalShow, setModalShow] = useState(false);
+  // Check if user is logged in on initial load
+/*   useEffect(() => {
+    const verifyToken = async () => {
+      if (!authToken) {
+        setLoading(false);
+        return;
+      }
 
-  // Update localStorage when user changes
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('currentUser');
-    }
-  }, [currentUser]);
+      try {
+        // Verify token with backend
+        const response = await authApi.get('/verify-token');
+        setCurrentUser(response.data.user);
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        // Clear invalid token
+        localStorage.removeItem('authToken');
+        setAuthToken(null);
+        setCurrentUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
+  }, [authToken]); */
+
+    // Initialize user from token
+    useEffect(() => {
+      const initializeAuth = () => {
+        if (authToken) {
+          try {
+            // Decode JWT token to get user data
+            const decodedToken = jwtDecode(authToken);
+            
+            // Check if token is expir
+              setCurrentUser({
+                id: decodedToken.id,
+                name: decodedToken.name,
+                role: decodedToken.role,
+                email: decodedToken.email
+              });
+
+          } catch (error) {
+            console.error('Token decode error:', error);
+            localStorage.removeItem('token');
+            setToken(null);
+            setCurrentUser(null);
+          }
+        }
+        setLoading(false);
+      };
+  
+      initializeAuth();
+    }, [authToken]);
+
+
 
   // Login function
-  const login = (email, password, role) => {
-    // Clear any previous errors
+  const login = async (email, password, role) => {
     setAuthError('');
-    
-    // Find the user that matches the credentials
-    const user = predefinedUsers.find(
-      (user) => user.email === email && 
-                user.password === password && 
-                user.role === role
-    );
-    
-    if (user) {
-      // Remove password from the user object before storing
-      const { password, ...userWithoutPassword } = user;
-      setCurrentUser(userWithoutPassword);
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/${role}/sign-in`, {
+        email,
+        password,
+      });
+      
+      const token = response.data.token;
+      setAuthToken(token);
+      localStorage.setItem('authToken', token);
       return true;
-    } else {
-      setAuthError('Invalid credentials. Please try again.');
+    } catch (error) {
+      setAuthError(error.response?.data?.message || 'Login failed');
       return false;
     }
   };
 
   // Sign up function (in a real app, this would connect to a backend)
-  const signup = (name, email, password) => {
-    // Check if email already exists
-    const existingUser = predefinedUsers.find(user => user.email === email);
-    
-    if (existingUser) {
-      setAuthError('Email already in use. Please use a different email.');
+  const signup = async (name, email, password, phoneNumber) => {
+    setAuthError("");
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/user/sign-up`, {
+        name,
+        email,
+        phoneNumber,
+        password,
+      });
+      if (response.status === 201) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      setAuthError(error.response?.data?.message || "Registration failed");
       return false;
     }
-    
-    // In a real app, you would add the user to a database
-    // For this demo, we'll just login as a regular user
-    console.log('New user would be created:', { name, email, role: 'user' });
-    
-    // Find the predefined user with the 'user' role
-    const regularUser = predefinedUsers.find(user => user.role === 'user');
-    
-    if (regularUser) {
-      const { password, ...userWithoutPassword } = regularUser;
-      setCurrentUser(userWithoutPassword);
-      return true;
-    }
-    
-    return false;
   };
 
   // Logout function
   const logout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('authToken');
+    setAuthToken(null);
   };
 
   // Check if user has a specific role
@@ -99,10 +141,14 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     hasRole,
-    authError
+    authError,
+    authToken,
+    loading,
+    modalShow,
+    setModalShow
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };
 
 // Custom hook to use the auth context
