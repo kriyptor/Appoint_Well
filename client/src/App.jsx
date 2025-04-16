@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -30,7 +29,7 @@ function App() {
             
             {/* User-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['user']} />}>
-              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/user-dashboard/*" element={<UserDashboard />} />
             </Route>
             
             {/* Admin-specific routes */}

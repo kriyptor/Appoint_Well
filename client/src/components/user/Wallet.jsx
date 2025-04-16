@@ -5,8 +5,8 @@ import axios from 'axios';
 
 
 function Wallet() {
-  const { modalShow, setModalShow, authToken } = useAuth();
-  const [walletBalance, setWalletBalance] = useState(0);
+  const { modalShow, setModalShow, authToken, walletBalance, setWalletBalance } = useAuth();
+  //const [walletBalance, setWalletBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

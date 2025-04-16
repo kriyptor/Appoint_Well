@@ -16,7 +16,7 @@ function Navigation() {
   
 
   return (
-    <Navbar bg="primary" expand="lg" >
+    <Navbar bg="primary" expand="lg" sticky="top">
       <Container>
         <Navbar.Brand as={Link} to={homeNav}>AppointWell</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -30,9 +30,10 @@ function Navigation() {
                 {/* User-specific routes */}
                 {hasRole('user') && (
                   <>
-                  <Nav.Link as={Link} to="/user-dashboard">User Dashboard</Nav.Link>
-                  <Nav.Link as={Link} to="/user-dashboard">Appointments</Nav.Link>
-                  <Nav.Link as={Link} to="/user-dashboard">Services</Nav.Link>
+                  {/* <Nav.Link as={Link} to="/user-dashboard/">User Dashboard</Nav.Link> */}
+                  <Nav.Link as={Link} to="/user-dashboard/">Book</Nav.Link>
+                  <Nav.Link as={Link} to="/user-dashboard/appointments">Appointments</Nav.Link>
+                  <Nav.Link as={Link} to="/user-dashboard/services">Services</Nav.Link>
                   <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>
                   </>
                 )}
@@ -60,6 +61,7 @@ function Navigation() {
               <Navbar.Text className="me-3">
                 Hi!, <strong>{currentUser.name}</strong>
               </Navbar.Text>
+              {/* {currentUser.role === 'user' && <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>} */}
               <Button variant="danger" onClick={handleLogout}>Logout</Button>
             </Nav>
           )}

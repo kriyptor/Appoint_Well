@@ -5,6 +5,8 @@ const router = express.Router();
 
 router.get('/get-all-services', authenticate(['admin','user']), serviceController.getAllService);
 
+router.get('/get-all-services-data', authenticate(['admin','user']), serviceController.getAllServiceData);
+
 router.get('/get-single-service/:id', authenticate(['admin','user']), serviceController.getSingleService);
 
 router.post('/create', authenticate(['admin']), serviceController.createService);

@@ -44,6 +44,37 @@ exports.createService = async (req, res) => {
     }
 }
 
+
+exports.getAllServiceData = async (req, res) => {
+    try {
+
+        const allServices = await Services.findAll();
+
+        const allServicesFormattedData = allServices.map(
+          ({ id, title, price, category }) => ({
+            id,
+            title,
+            price,
+            category,
+          })
+        );
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All services',
+            data: allServicesFormattedData
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
 //TODO:Implement pagination
 exports.getAllService = async (req, res) => {
     try {
