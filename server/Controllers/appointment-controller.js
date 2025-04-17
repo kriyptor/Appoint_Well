@@ -95,7 +95,10 @@ exports.getAllUserAppointments = async (req, res) => {
 
         const userId = req.user.id;
 
-        const allAppointment = await Appointments.findAll({ where : { userId: userId } });
+        const allAppointment = await Appointments.findAll({
+          where: { userId: userId },
+          order : [['createdAt', 'DESC']]
+        });
 
         return res.status(200).json({ 
             success: true,

@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState('');
   const [modalShow, setModalShow] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [appointments, setAppointments] = useState([]);
   // Check if user is logged in on initial load
 /*   useEffect(() => {
     const verifyToken = async () => {
@@ -148,7 +149,9 @@ export const AuthProvider = ({ children }) => {
     modalShow,
     setModalShow,
     walletBalance,
-    setWalletBalance
+    setWalletBalance,
+    appointments,
+    setAppointments
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
