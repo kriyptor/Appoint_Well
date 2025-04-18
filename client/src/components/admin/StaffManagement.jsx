@@ -1,27 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { ListGroup, Button, Form } from 'react-bootstrap';
-import mockApi from '../../mockData';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 const StaffManagement = () => {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [staff, setStaff] = useState([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { authToken } = useAuth();
+ 
 
-  useEffect(() => {
+/*   useEffect(() => {
     const fetchStaff = async () => {
       const res = await mockApi.getStaff();
       setStaff(res);
     };
     fetchStaff();
-  }, []);
+  }, []); */
 
   const handleAddStaff = async () => {
-    const res = await mockApi.addStaff({ name, email });
-    setStaff([...staff, res]);
+   try {
+    const response = await axios.post(`${BASE_URL}/auth/staff/sign-up`, {
+      name,
+      email,
+      password,
+    }, {
+      headers: {
+        'Authorization': authToken,
+      }
+    });
+    if (response.status === 201) {
+     // console.log('Staff added successfully');
+      alert('Staff added successfully');
+    }
+
     setName('');
     setEmail('');
     setPassword('');
+   } catch (error) {
+    console.error('Error adding staff:', error);
+   }
   };
 
   return (
@@ -52,13 +72,6 @@ const StaffManagement = () => {
           </Button>
         </Form.Group>
       </Form>
-      <ListGroup className="mt-3">
-        {staff.map((s) => (
-          <ListGroup.Item key={s.id}>
-            {s.name} - {s.email}
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
     </div>
   );
 };

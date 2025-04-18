@@ -1,30 +1,19 @@
 import React from 'react';
-import { Container, Card, ListGroup } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ServiceManagement from '../components/admin/ServiceManagement';
+
+
 
 function AdminDashboard() {
   const { currentUser } = useAuth();
   
   return (
-    <Container className="mt-4">
-      <Card>
-        <Card.Header as="h4">Admin Dashboard</Card.Header>
-        <Card.Body>
-          <Card.Title>Welcome, {currentUser.name}</Card.Title>
-          <Card.Text>
-            This is the admin dashboard. Only users with the 'admin' role can access this page.
-          </Card.Text>
-          <Card.Text>
-            As an admin, you have access to all system functions and can:
-          </Card.Text>
-          <ListGroup variant="flush">
-            <ListGroup.Item>Manage users</ListGroup.Item>
-            <ListGroup.Item>View system reports</ListGroup.Item>
-            <ListGroup.Item>Configure system settings</ListGroup.Item>
-          </ListGroup>
-        </Card.Body>
-      </Card>
-    </Container>
+    <Routes>
+        <Route path="/" element={<ServiceManagement />} />
+        {/* <Route path="/appointments" element={<AppointmentManagement />} />
+        <Route path="/services" element={<ServiceShowcase />} /> */}
+      </Routes>
   );
 }
 

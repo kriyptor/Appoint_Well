@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 function Navigation() {
   const { currentUser, logout, hasRole, setModalShow } = useAuth();
-  const homeNav = `${currentUser.role}-dashboard`;
+  const homeNav = `${currentUser?.role}-dashboard`;
   const navigate = useNavigate();
   
   const handleLogout = () => {
@@ -47,7 +47,7 @@ function Navigation() {
                 {hasRole('admin') && (
                   <>
                     <Nav.Link as={Link} to="/admin-dashboard">Admin Dashboard</Nav.Link>
-                    <Nav.Link as={Link} to="/manage-users">Manage Users</Nav.Link>
+                    {/* <Nav.Link as={Link} to="/manage-users">Manage Users</Nav.Link> */}
                   </>
                 )}
               </>

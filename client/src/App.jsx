@@ -5,7 +5,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Navigation from './pages/Navigation';
 import AuthInterface from './components/auth/AuthInterface';
 import UserDashboard from './pages/UserDashboardPage';
-import AdminDashboard from './pages/AdminDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import StaffDashboard from './pages/StaffDashboardPage';
 import Profile from './pages/Profile';
 import Unauthorized from './pages/Unauthorized';
@@ -34,7 +34,7 @@ function App() {
             
             {/* Admin-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-dashboard/*" element={<AdminDashboardPage />} />
               {/* Add more admin routes as needed */}
             </Route>
             

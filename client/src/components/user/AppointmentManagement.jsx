@@ -1,108 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ListGroup, Button, Modal, Nav, Container } from 'react-bootstrap';
+import { ListGroup, Button, Modal, Nav, Container, Spinner, Alert } from 'react-bootstrap';
 import AppointmentCard from './AppointmentCard';
 import axios from 'axios';
+import RescheduleModal from './RescheduleModal';
 
 const AppointmentManagement = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  //const [appointments, setAppointments] = useState([]);
-  const [showCancel, setShowCancel] = useState(false);
-  const [showReschedule, setShowReschedule] = useState(false);
-  const [cancelId, setCancelId] = useState(null);
-  const { appointments, setAppointments, authToken } = useAuth();
+  const [appointments, setAppointments] = useState([]);
+  const [show, setShow] = useState(false);
+  const [selectedAppt, setSelectedAppt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('upcoming');
+  const { authToken } = useAuth();
 
-  const appointmentList = [
-    { id: 1, title: 'Service 1', date: '2023-06-01', time: '10:00 AM' },
-    { id: 2, title: 'Service 2', date: '2023-06-02', time: '11:00 AM' },
-    { id: 3, title: 'Service 3', date: '2023-06-03', time: '12:00 PM' },
-    // Add more appointments here
-  ]
-
+  const fetchAppointments = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.get(`${BASE_URL}/appointment/user/all`, {
+        headers: { Authorization: authToken }
+      });
+      setAppointments(response.data.data);
+    } catch (error) {
+      setError('Failed to fetch appointments. Please try again.');
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}/appointment/user/all`, {
-          headers: { Authorization: authToken }
-        });
-
-        setAppointments(response.data.data);
-        console.log(response.data.data);
-      
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      }
-    }
-
     fetchAppointments();
-  }, []);
+  }, [BASE_URL, authToken]);
 
-  const handleCancel = (id) => {
-    console.log('cancel id: ',id);
+  const handleCancel = async (id) => {
+    try {
+      await axios.patch(
+        `${BASE_URL}/appointment/cancel/${id}`,
+        {},
+        { headers: { Authorization: authToken } }
+      );
+
+      setAppointments(appointments.map(appt => 
+        appt.id === id ? { ...appt, status: 'cancelled' } : appt
+      ));
+    } catch (error) {
+      setError('Failed to cancel appointment. Please try again.');
+      console.error('Error canceling appointment:', error);
+    }
   };
 
   const handleReschedule = (id) => {
-    // Handle rescheduling logic here
-    console.log('reschedule id: ',id);
+    const appointment = appointments.find((appt) => appt.id === id);
+    if (appointment) {
+      setSelectedAppt(appointment);
+      setShow(true);
+    }
   };
 
-/*   useEffect(() => {
-    const fetchAppointments = async () => {
-      const res = await mockApi.getUserAppointments();
-      setAppointments(res);
-    };
-    fetchAppointments();
-  }, []);
+  const handleRescheduleSuccess = (updatedAppointment) => {
+    setAppointments(appointments.map(appt => 
+      appt.id === updatedAppointment.id ? updatedAppointment : appt
+    ));
+  };
 
-  const handleCancel = async () => {
-    await mockApi.deleteAppointment(cancelId);
-    setAppointments(appointments.filter((a) => a.id !== cancelId));
-    setShowCancel(false);
-  }; */
+  const filteredAppointments = appointments.filter(appt => {
+    const isUpcoming = new Date(appt.date) >= new Date().setHours(0, 0, 0, 0);
+    return activeTab === 'upcoming' ? isUpcoming : !isUpcoming;
+  });
+
+  if (loading) {
+    return (
+      <Container className="text-center py-5">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </Container>
+    );
+  }
 
   return (
     <Container>
-      <h2 className='mt-3 text-center'>My Appointments</h2>
+      <h2 className="mt-3 text-center">My Appointments</h2>
       
-      <Container className='mt-3'>
-      <Nav variant="tabs" defaultActiveKey="/upcoming">
-      <Nav.Item>
-        <Nav.Link eventKey='/upcoming'>Upcoming Appointments</Nav.Link>
-      </Nav.Item>
-      <Nav.Item>
-        <Nav.Link eventKey="link-1">Previous Appointments</Nav.Link>
-      </Nav.Item>
-    </Nav>
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+      
+      <Container className="mt-3">
+        <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab}>
+          <Nav.Item>
+            <Nav.Link eventKey="upcoming">Upcoming Appointments</Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link eventKey="previous">Previous Appointments</Nav.Link>
+          </Nav.Item>
+        </Nav>
       </Container>
 
-      {appointments.map((appt) => (
-        <AppointmentCard
-          key={appt.id}
-          id={appt.id}
-          title={appt.title}
-          date={appt.date}
-          time={appt.startTime}
-          price={appt.price}
-          onCancel={() => handleCancel(appt.id)}
-          onReschedule={() => handleReschedule(appt.id)}
-        />
-      ))}
-      
+      <div className="mt-3">
+        {filteredAppointments.length === 0 ? (
+          <p className="text-center text-muted">No {activeTab} appointments found.</p>
+        ) : (
+          filteredAppointments.map((appt) => (
+            <AppointmentCard
+              key={appt.id}
+              id={appt.id}
+              title={appt.title}
+              date={appt.date}
+              time={appt.startTime}
+              price={appt.price}
+              status={appt.status}
+              onCancel={() => handleCancel(appt.id)}
+              onReschedule={() => handleReschedule(appt.id)}
+            />
+          ))
+        )}
+      </div>
 
-      {/* <Modal show={showCancel} onHide={() => setShowCancel(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Cancellation</Modal.Title>
-        </Modal.Header>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCancel(false)}>
-            Close
-          </Button>
-          <Button variant="danger" onClick={handleCancel}>
-            Confirm
-          </Button>
-        </Modal.Footer>
-      </Modal> */}
+      <RescheduleModal 
+        show={show} 
+        setShow={setShow} 
+        selectedAppt={selectedAppt} 
+        onRescheduleSuccess={handleRescheduleSuccess}
+      />
     </Container>
   );
 };

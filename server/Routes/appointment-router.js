@@ -11,7 +11,7 @@ router.get('/user/all', authenticate(['user']), appointmentController.getAllUser
 
 router.patch('/:id/reschedule', authenticate(['user']), appointmentController.userRescheduleAppointment);
 
-router.patch('/:id/cancel', authenticate(['user']), appointmentController.userCancelAppointment);
+router.patch('/cancel/:id', authenticate(['user']), appointmentController.userCancelAppointment);
 
 /* -------Admin Routes-------- */
 

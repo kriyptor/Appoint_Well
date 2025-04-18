@@ -34,7 +34,7 @@ const app = express();
 
   const corsOptions = {
       origin: "*", // Replace with your frontend URL in production 
-      methods: ["GET", "POST", "PUT", "DELETE"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],
     };
   
