@@ -5,6 +5,8 @@ const router = express.Router();
 
 router.get('/user/wallet-balance', authenticate(['user']), paymentController.getWalletBalance);
 
+router.get('/admin/revenue', authenticate(['admin']), paymentController.getRevenueData);
+
 router.patch('/user/add-money', authenticate(['user']), paymentController.addWalletMoney);
 
 module.exports = router;

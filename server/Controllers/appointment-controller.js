@@ -270,12 +270,37 @@ exports.userCancelAppointment = async (req, res) => {
 exports.getAllAppointments = async (req, res) => {
     try {
 
-        const allAppointment = await Appointments.findAll();
+        const allAppointment = await Appointments.findAll({
+            include:[
+                {
+                    model : Users,
+                    attributes: ['name']
+                },
+                {
+                    model : Services,
+                    attributes: ['title']
+                }
+            ],
+            order : [['createdAt', 'DESC']]
+        });
+
+        const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            userName: data.User.name,
+            serviceTitle: data.Service.title,
+            date: data.date,
+            time: data.startTime,
+            staff: data.staffId,
+            serviceId: data.serviceId,
+            status: data.status,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+        }))
 
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: allAppointment
+            data: formatedAppointmentData
         });
         
     } catch (error) {

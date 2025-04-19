@@ -47,7 +47,8 @@ function Navigation() {
                 {hasRole('admin') && (
                   <>
                     <Nav.Link as={Link} to="/admin-dashboard">Admin Dashboard</Nav.Link>
-                    {/* <Nav.Link as={Link} to="/manage-users">Manage Users</Nav.Link> */}
+                    <Nav.Link as={Link} to="/admin-dashboard/staff">Manage Staff</Nav.Link>
+                    <Nav.Link as={Link} to="/admin-dashboard/revenue">Revenue Analytics</Nav.Link>
                   </>
                 )}
               </>

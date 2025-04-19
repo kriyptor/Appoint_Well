@@ -72,8 +72,10 @@ const ServiceManagement = () => {
       <Row className="justify-content-center">
         <Col md={8} lg={8}>
           <Card className="shadow-sm mb-4">
+               <Card.Header className="bg-primary text-white text-center">
+                    <h4 className="mb-0">Service Management</h4>
+                </Card.Header>
             <Card.Body>
-              <h3 className="mb-2 text-center">Service Management</h3>
               {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
               {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
               <Form>

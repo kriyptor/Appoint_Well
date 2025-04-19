@@ -1,78 +1,203 @@
 import React, { useState, useEffect } from 'react';
-import { ListGroup, Button, Form } from 'react-bootstrap';
+import { Container, Card, Button, Form, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import StaffMemberCard from './StaffMemberCard';
 
 const StaffManagement = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [staff, setStaff] = useState([]);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { authToken } = useAuth();
- 
+  
+  // Form states
+  const [name, setName] = useState('');
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [specializations, setSpecializations] = useState([]);
+  const [staffMembers, setStaffMembers] = useState([]);
+  
+  // Data and UI states
+  const [fetchedServicesData, setFetchedServicesData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-/*   useEffect(() => {
-    const fetchStaff = async () => {
-      const res = await mockApi.getStaff();
-      setStaff(res);
-    };
-    fetchStaff();
-  }, []); */
+  // Get unique categories from services
+  const categories = [...new Set(fetchedServicesData.map(s => s.category))];
 
-  const handleAddStaff = async () => {
-   try {
-    const response = await axios.post(`${BASE_URL}/auth/staff/sign-up`, {
-      name,
-      email,
-      password,
-    }, {
-      headers: {
-        'Authorization': authToken,
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const ServiceResponse = await axios.get(`${BASE_URL}/service/get-all-services-data`, {
+          headers: { Authorization: authToken }
+        });
+        if (ServiceResponse.data.data) {
+          setFetchedServicesData(ServiceResponse.data.data);
+        }
+
+        const StaffResponse = await axios.get(`${BASE_URL}/staff/all-staff`, {
+          headers: { Authorization: authToken }
+        });
+        if (StaffResponse.data.data) {
+          setStaffMembers(StaffResponse.data.data);
+        }
+      } catch (err) {
+        setError('Failed to load services');
+        console.error('Error fetching services:', err);
       }
-    });
-    if (response.status === 201) {
-     // console.log('Staff added successfully');
-      alert('Staff added successfully');
+    };
+    fetchServices();
+  }, [BASE_URL, authToken]);
+
+  const handleServiceChange = (serviceId) => {
+    setSelectedServices(prev => 
+      prev.includes(serviceId) 
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  };
+
+  const handleSpecializationChange = (category) => {
+    setSpecializations(prev => 
+      prev.includes(category)
+        ? prev.filter(cat => cat !== category)
+        : [...prev, category]
+    );
+  };
+
+  const handleAddStaff = async (e) => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    if (!name) {
+      setError('Please enter staff name');
+      setLoading(false);
+      return;
     }
 
-    setName('');
-    setEmail('');
-    setPassword('');
-   } catch (error) {
-    console.error('Error adding staff:', error);
-   }
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/staff/create`,
+        {
+          name,
+          specializations,
+          serviceIds: selectedServices
+        },
+        {
+          headers: { Authorization: authToken }
+        }
+      );
+
+      if (response.status === 201) {
+        setSuccess('Staff member added successfully!');
+        // Reset form
+        setName('');
+        setSelectedServices([]);
+        setSpecializations([]);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error adding staff member');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div>
-      <h2>Staff Management</h2>
-      <Form>
-        <Form.Group>
-          <Form.Control
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Form.Control
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Form.Control
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button className="mt-2" onClick={handleAddStaff}>
-            Add Staff
-          </Button>
-        </Form.Group>
-      </Form>
-    </div>
+    <Container className="py-4">
+      <Card className="shadow-sm">
+        <Card.Header className="bg-primary text-white text-center">
+          <h4 className="mb-0">Staff Management</h4>
+        </Card.Header>
+        <Card.Body>
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert variant="success" dismissible onClose={() => setSuccess('')}>
+              {success}
+            </Alert>
+          )}
+
+          <Form>
+            <Form.Group className="mb-4">
+              <Form.Label>Staff Name*</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter staff name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-4">
+              <Form.Label>Assign Services</Form.Label>
+              <div className="border rounded p-3">
+                <Row xs={1} md={2} lg={8} className="g-3">
+                  {fetchedServicesData.map(service => (
+                    <Col key={service.id}>
+                      <Form.Check
+                        type="checkbox"
+                        id={`service-${service.id}`}
+                        label={service.title}
+                        checked={selectedServices.includes(service.id)}
+                        onChange={() => handleServiceChange(service.id)}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            </Form.Group>
+
+            <Form.Group className="mb-4">
+              <Form.Label>Specializations</Form.Label>
+              <div className="border rounded p-3">
+                <Row xs={1} md={2} lg={3} className="g-3">
+                  {categories.map(category => (
+                    <Col key={category}>
+                      <Form.Check
+                        type="checkbox"
+                        id={`category-${category}`}
+                        label={category}
+                        checked={specializations.includes(category)}
+                        onChange={() => handleSpecializationChange(category)}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            </Form.Group>
+
+            <div className="d-grid">
+              <Button 
+                variant="primary"
+                disabled={loading}
+                onClick={handleAddStaff}
+              >
+                {loading ? (
+                  <>
+                    <Spinner size="sm" className="me-2" />
+                    Adding Staff...
+                  </>
+                ) : (
+                  'Add Staff Member'
+                )}
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      <div className="mt-4">
+        <h4 className="mb-3 text-center">Staff Members</h4>
+      {staffMembers &&  
+        staffMembers.map((staff) => (
+          <StaffMemberCard key={staff.id} staff={staff} />
+        ))
+      }
+      </div>
+    </Container>
   );
 };
 
