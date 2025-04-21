@@ -60,9 +60,7 @@ export const AuthProvider = ({ children }) => {
             // Check if token is expir
               setCurrentUser({
                 id: decodedToken.id,
-                name: decodedToken.name,
                 role: decodedToken.role,
-                email: decodedToken.email
               });
 
           } catch (error) {

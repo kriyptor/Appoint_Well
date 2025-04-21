@@ -3,6 +3,7 @@ const cors = require(`cors`);
 const db = require(`./Utils/database`);
 const bodyParser = require(`body-parser`);
 const jwt = require('jsonwebtoken'); 
+const { scheduleTasks }= require(`./Cron/task-cron`);
 
 const Admin = require(`./Models/admin-model`);
 const Users = require(`./Models/users-model`);
@@ -114,9 +115,12 @@ createData() */
 /* -------Sync the database------- */
 
 db.sync(/* { force : true } */)
-.then(() => {
+  .then(() => {
     console.log(`Connected with DB!`);
+    /* --------------CRON JOB--------------- */
+    /* scheduleTasks(); */
     app.listen(PORT, () => console.log(`Server running @ PORT:${PORT}`));
-}).catch((err) => {
-    console.log(err)
-})
+  })
+  .catch((err) => {
+    console.log(err);
+  });

@@ -1,11 +1,7 @@
-// src/components/Profile.jsx
 import React from 'react';
 import { Container, Card, Badge, Row, Col, Button } from 'react-bootstrap';
-import { useAuth } from '../context/AuthContext';
 
-function Profile() {
-  const { currentUser } = useAuth();
-
+function AdminProfileCard({ admin, onEdit }) {
   return (
     <Container className="mt-4">
       <Row className="justify-content-center">
@@ -23,30 +19,30 @@ function Profile() {
               />
               <div className="w-100">
                 <div className="mb-3 text-center">
-                  <h5 className="mb-1">Name:{currentUser.name}</h5>
+                  <h5 className="mb-1">{admin.name}</h5>
                   <div className="text-muted mb-1">
                     <i className="bi bi-envelope me-2"></i>
-                    {currentUser.email}
+                    {admin.email}
                   </div>
                   <div>
                     <span className="fw-semibold">Role: </span>
                     <Badge
                       bg={
-                        currentUser.role === "admin"
+                        admin.role === "admin"
                           ? "danger"
-                          : currentUser.role === "staff"
+                          : admin.role === "staff"
                           ? "warning"
                           : "primary"
                       }
                       className="text-capitalize"
                     >
-                      {currentUser.role}
+                      {admin.role}
                     </Badge>
                   </div>
                 </div>
               </div>
               <div className="w-100 d-flex justify-content-center mt-3">
-                <Button variant="outline-primary" size="md">
+                <Button variant="outline-primary" size="md" onClick={onEdit}>
                   <i className="bi bi-pencil me-2"></i>
                   Edit Profile
                 </Button>
@@ -59,4 +55,4 @@ function Profile() {
   );
 }
 
-export default Profile;
+export default AdminProfileCard;

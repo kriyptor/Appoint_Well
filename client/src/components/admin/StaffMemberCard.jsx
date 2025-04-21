@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Card, Col, Row } from "react-bootstrap";
 
-function StaffMemberCard({ staff }) {
+function StaffMemberCard({ staff, onRemove }) {
   return (
     <Card className="mb-3 shadow-sm">
       <Card.Body className="p-4">
@@ -26,7 +26,7 @@ function StaffMemberCard({ staff }) {
             </p>
           </Col>
           <Col md={3} className="text-md-end">
-            <Button variant="outline-danger">Remove</Button>
+            <Button variant="outline-danger" onClick={onRemove}>Remove</Button>
           </Col>
         </Row>
       </Card.Body>

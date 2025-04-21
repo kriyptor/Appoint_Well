@@ -24,16 +24,14 @@ function Navigation() {
           <Nav className="me-auto">
             {currentUser ? (
               <>
-                {/* Common pages for all authenticated users */}
-                <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
-                
                 {/* User-specific routes */}
                 {hasRole('user') && (
                   <>
                   {/* <Nav.Link as={Link} to="/user-dashboard/">User Dashboard</Nav.Link> */}
-                  <Nav.Link as={Link} to="/user-dashboard/">Book</Nav.Link>
-                  <Nav.Link as={Link} to="/user-dashboard/appointments">Appointments</Nav.Link>
-                  <Nav.Link as={Link} to="/user-dashboard/services">Services</Nav.Link>
+                  <Nav.Link as={Link} to="/user/profile">Profile</Nav.Link>
+                  <Nav.Link as={Link} to="/user/">Book</Nav.Link>
+                  <Nav.Link as={Link} to="/user/appointments">Appointments</Nav.Link>
+                  <Nav.Link as={Link} to="/user/services">Services</Nav.Link>
                   <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>
                   </>
                 )}
@@ -46,9 +44,10 @@ function Navigation() {
                 {/* Admin-specific routes */}
                 {hasRole('admin') && (
                   <>
-                    <Nav.Link as={Link} to="/admin-dashboard">Admin Dashboard</Nav.Link>
-                    <Nav.Link as={Link} to="/admin-dashboard/staff">Manage Staff</Nav.Link>
-                    <Nav.Link as={Link} to="/admin-dashboard/revenue">Revenue Analytics</Nav.Link>
+                    <Nav.Link as={Link} to="/admin/profile">Profile</Nav.Link>
+                    <Nav.Link as={Link} to="/admin">Manage Services</Nav.Link>
+                    <Nav.Link as={Link} to="/admin/staff">Manage Staffs</Nav.Link>
+                    <Nav.Link as={Link} to="/admin/revenue">Revenue Analytics</Nav.Link>
                   </>
                 )}
               </>
@@ -59,9 +58,9 @@ function Navigation() {
           
           {currentUser && (
             <Nav>
-              <Navbar.Text className="me-3">
+              {/* <Navbar.Text className="me-3">
                 Hi!, <strong>{currentUser.name}</strong>
-              </Navbar.Text>
+              </Navbar.Text> */}
               {/* {currentUser.role === 'user' && <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>} */}
               <Button variant="danger" onClick={handleLogout}>Logout</Button>
             </Nav>

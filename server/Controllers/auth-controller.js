@@ -14,12 +14,19 @@ function isStringInvalid(string) {
 }
 
 
-const generateAccessToken = (id, name, role, email) => {
+/* const generateAccessToken = (id, name, role, email) => {
   return jwt.sign(
     { id: id, name: name, email: email, role: role },
     process.env.JWT_SECRET_KEY
   );
-};
+}; */
+
+const generateAccessToken = (id, role) => {
+    return jwt.sign(
+      { id: id, role: role },
+      process.env.JWT_SECRET_KEY
+    );
+  };
 
 exports.createUser = async (req, res) => {
     try {
@@ -101,12 +108,88 @@ exports.loginUser = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(user.id, user.name, 'user', user.email);
+        const token = generateAccessToken(user.id, 'user');
 
         return res.status(200).json({
             success: true,
             message: 'Login successful',
             token: token
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.getUserData = async (req, res) => {
+    try {
+        
+        const userId = req.user.id;
+    
+        const user = await Users.findOne({ where: { id: userId } });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `User does not exist!`
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'User Data',
+            data: user
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+/* -----------User Data Update------------ */
+
+exports.updateUserData = async (req, res) => {
+    try {
+
+        const userId = req.user.id;
+
+        const { name, email, password, profilePicture } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(name) || isStringInvalid(email) || isStringInvalid(profilePicture)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
+
+        const updatedUserData  = {
+            name: name,
+            email : email,
+            profilePicture : profilePicture
+        }
+
+        if(password.length !== 0){
+            const salt = 10;
+            const hashedPassword = await bcrypt.hash(password, salt);
+            updatedUserData.password  = hashedPassword;
+        }
+        
+        const updatedUser = await Users.update(updatedUserData, { where : { id : userId } })
+    
+        return res.status(200).json({
+            success: true,
+            message: 'User data updated',
         });
 
     } catch (error) {

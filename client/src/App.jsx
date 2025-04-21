@@ -29,12 +29,12 @@ function App() {
             
             {/* User-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['user']} />}>
-              <Route path="/user-dashboard/*" element={<UserDashboard />} />
+              <Route path="/user/*" element={<UserDashboard />} />
             </Route>
             
             {/* Admin-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/admin-dashboard/*" element={<AdminDashboardPage />} />
+              <Route path="/admin/*" element={<AdminDashboardPage />} />
               {/* Add more admin routes as needed */}
             </Route>
             

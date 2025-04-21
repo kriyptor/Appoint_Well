@@ -1,11 +1,7 @@
-// src/components/Profile.jsx
 import React from 'react';
 import { Container, Card, Badge, Row, Col, Button } from 'react-bootstrap';
-import { useAuth } from '../context/AuthContext';
 
-function Profile() {
-  const { currentUser } = useAuth();
-
+function UserProfileCard({ user, onEdit }) {
   return (
     <Container className="mt-4">
       <Row className="justify-content-center">
@@ -16,37 +12,31 @@ function Profile() {
             </Card.Header>
             <Card.Body className="d-flex flex-column align-items-center">
               <img
-                src="https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+                src={user.profilePicture}
                 alt="Profile"
                 style={{ width: 140, height: 140, objectFit: "cover" }}
                 className="img-fluid rounded-circle mb-3"
               />
               <div className="w-100">
                 <div className="mb-3 text-center">
-                  <h5 className="mb-1">Name:{currentUser.name}</h5>
+                  <h5 className="mb-1">{user.name}</h5>
                   <div className="text-muted mb-1">
                     <i className="bi bi-envelope me-2"></i>
-                    {currentUser.email}
+                    {user.email}
                   </div>
                   <div>
                     <span className="fw-semibold">Role: </span>
                     <Badge
-                      bg={
-                        currentUser.role === "admin"
-                          ? "danger"
-                          : currentUser.role === "staff"
-                          ? "warning"
-                          : "primary"
-                      }
+                      bg="primary"
                       className="text-capitalize"
                     >
-                      {currentUser.role}
+                      User
                     </Badge>
                   </div>
                 </div>
               </div>
               <div className="w-100 d-flex justify-content-center mt-3">
-                <Button variant="outline-primary" size="md">
+                <Button variant="outline-primary" size="md" onClick={onEdit}>
                   <i className="bi bi-pencil me-2"></i>
                   Edit Profile
                 </Button>
@@ -59,4 +49,4 @@ function Profile() {
   );
 }
 
-export default Profile;
+export default UserProfileCard;

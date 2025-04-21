@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Form, Button, Spinner, Container, Row, Col, Alert, Card } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Spinner, Container, Row, Col, Alert, Card, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import ServiceCard from './ServiceCard';
 
 const ServiceManagement = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -14,9 +15,29 @@ const ServiceManagement = () => {
   const [serviceImage, setServiceImage] = useState('');
   const [services, setServices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { authToken } = useAuth();
+
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+
+        const response = await axios.get(`${BASE_URL}/service/get-all-services`, {
+          headers: {
+            'Authorization': authToken
+          }
+        });
+
+        setServices(response.data.data);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    };
+    fetchServices();
+  }, [BASE_URL, authToken]);
 
   const handleAddService = async () => {
     try {
@@ -65,6 +86,33 @@ const ServiceManagement = () => {
     } catch (error) {
       console.error('Error adding service:', error);
     }
+  };
+
+
+  const handleDeleteService = async (serviceId) => {
+    try {
+      await axios.delete(`${BASE_URL}/service/delete/${serviceId}`, {
+        headers: {
+          'Authorization': authToken
+        }
+      });
+      setServices(services.filter((service) => service.id !== serviceId));
+    } catch (error) {
+      console.error('Error deleting service:', error);
+    }
+  };
+
+
+  const setEditServiceData = (service) => {
+    setIsEditing(true);
+    setTitle(service.title);
+    setCategory(service.category);
+    setPrice(service.price);
+    setHours(service.hours);
+    setMinutes(service.minutes);
+    setDescription(service.description);
+    setServiceImage(service.serviceImage);
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -137,7 +185,7 @@ const ServiceManagement = () => {
                     </Row>
                   </Col>
                 </Row>
-                <Form.Group className="mb-3 mt-3">
+                <Form.Group className="mb-3">
                   <Form.Label>Description</Form.Label>
                   <Form.Control
                     as="textarea"
@@ -157,42 +205,35 @@ const ServiceManagement = () => {
                   />
                 </Form.Group>
                 <div className="d-grid">
-                     <Button variant="primary" onClick={handleAddService}>
+                   {
+                     isEditing ? (
+                      <Button variant="warning">
+                        Update Service
+                      </Button>
+                     ) : (
+                      <Button variant="primary" onClick={handleAddService}>
                       {isLoading ? (<><Spinner size="sm" className="me-2" />Adding Service...</>) : 'Add Service'}
-                     </Button>
+                      </Button>
+                     )
+                   }
                 </div>
               </Form>
             </Card.Body>
           </Card>
         </Col>
       </Row>
-
- {/*      <Row className="justify-content-center">
-        <Col md={10}>
-          <h4 className="mb-3">All Services</h4>
-          <ListGroup>
-            {services.length === 0 && (
-              <ListGroup.Item className="text-center text-muted">No services added yet.</ListGroup.Item>
-            )}
-            {services.map((service) => (
-              <ListGroup.Item key={service.id} className="d-flex align-items-center">
-                {service.serviceImage && (
-                  <img
-                    src={service.serviceImage}
-                    alt={service.title}
-                    style={{ width: 50, height: 50, objectFit: 'cover', marginRight: 16, borderRadius: 4 }}
-                  />
-                )}
-                <div>
-                  <div className="fw-bold">{service.title} <span className="text-muted">({service.category})</span></div>
-                  <div>₹{service.price} | Duration: <span className="badge bg-secondary">{service.duration}</span></div>
-                  <div className="small text-muted">{service.description}</div>
-                </div>
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        </Col>
-      </Row> */}
+      <div className="mt-4">
+        <h4 className="mb-3 text-center">All Services</h4>
+        {services &&
+          services.map((service) => (
+            <ServiceCard
+            key={service.id} 
+            service={service} 
+            onDelete={() => handleDeleteService(service.id)}
+            onEdit={() => setEditServiceData(service)}
+            />
+          ))}
+      </div>
     </Container>
   );
 };

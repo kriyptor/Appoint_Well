@@ -33,6 +33,12 @@ const Appointments = db.define(`Appointments`, {
         type: Sequelize.ENUM('pending', 'paid', 'failed'),
         allowNull: false
       }
+
+      /*
+      - Add staff name and picture field
+      - Add userRated? rating & review field
+      - Add staffreplied? & staff comment field
+      */
 });
 
 module.exports = Appointments;
