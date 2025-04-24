@@ -1,12 +1,13 @@
+const Appointments = require('../Models/appointments-model');
 const Reviews = require(`../Models/reviews-model`);
 const { v4: uuidv4 } = require('uuid');
 
 exports.userReviewResponse = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { serviceId, staffId, appointmentId, rating, reviewComment } = req.body;
+        const { appointmentId, rating, reviewComment } = req.body;
 
-        if (!serviceId || !staffId || !appointmentId || !rating) {
+        if (!appointmentId || !rating) {
             return res.status(400).json({
                 success: false,
                 message: 'All required fields must be provided'
@@ -20,13 +21,38 @@ exports.userReviewResponse = async (req, res) => {
             });
         }
 
+        const appointment = await Appointments.findOne({
+            where: { id: appointmentId, userId: userId, status: 'completed' }
+        });
+
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Appointment not found or you do not have permission to review it'
+            });
+        }
+
+        const existingReview = await Reviews.findOne({
+            where: {
+                userId : userId,
+                staffId: appointment.staffId,
+                appointmentsId : appointmentId
+            }
+        });
+        if (existingReview) {
+            return res.status(400).json({
+                success: false,
+                message: 'You have already submitted a review for this appointment'
+            });
+        }
+
         const newId = uuidv4();
+       
         const reviewData = {
             id: newId,
             rating,
             userId,
-            staffId,
-            serviceId,
+            staffId : appointment.staffId,
             appointmentId,
             ...(reviewComment && { comment: reviewComment })
         };

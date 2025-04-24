@@ -21,4 +21,9 @@ router.patch('/:id/reschedule/admin', authenticate(['admin']), appointmentContro
 
 router.patch('/:id/cancel/admin', authenticate(['admin']), appointmentController.adminCancelAppointment);
 
+
+/* -------Staff Routes-------- */
+
+router.get('/staff/all', authenticate(['staff']), appointmentController.getAllStaffAppointments);
+
 module.exports = router;

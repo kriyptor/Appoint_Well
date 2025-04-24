@@ -80,9 +80,6 @@ Services.belongsToMany(Staff, { through: StaffService, foreignKey: `serviceId` }
 Services.hasMany(Appointments, { foreignKey: `serviceId`, onDelete: `RESTRICT` });
 Appointments.belongsTo(Services, { foreignKey: `serviceId`});
 
-Services.hasMany(Reviews, { foreignKey: `servicesId`, onDelete: `CASCADE` });
-Reviews.belongsTo(Services, { foreignKey: `servicesId` });
-
 
 /* --------------Appointments Associations---------------- */
 
@@ -90,11 +87,14 @@ Reviews.belongsTo(Services, { foreignKey: `servicesId` });
 Appointments.hasOne(Reviews, { foreignKey: `appointmentsId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
+Reviews.hasOne(Appointments, { foreignKey: `ReviewId`, onDelete: `CASCADE` });
+Appointments.belongsTo(Reviews, { foreignKey: `ReviewId` });
+
 //TODO:create admin and revenue data
 
 /* async function createData() {
   await Admin.create({
-    id: 127,
+    id: 172,
     name : 'shivi',
     email: 'shivi.admin@appointwell.com',
     password: 'shivi#admin@27'
@@ -109,7 +109,6 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
     totalRefunds : 0
   })
 }
-
 createData() */
 
 /* -------Sync the database------- */

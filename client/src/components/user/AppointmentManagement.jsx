@@ -4,6 +4,7 @@ import { ListGroup, Button, Modal, Nav, Container, Spinner, Alert } from 'react-
 import AppointmentCard from './AppointmentCard';
 import axios from 'axios';
 import RescheduleModal from './RescheduleModal';
+import GrockCard from './GrockCard';
 
 const AppointmentManagement = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;

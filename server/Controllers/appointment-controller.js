@@ -2,9 +2,12 @@ const Services = require(`../Models/services-model`);
 const Users = require(`../Models/users-model`);
 const Revenue = require(`../Models/revenue-model`);
 const Appointments = require(`../Models/appointments-model`);
+const StaffService = require(`../Models/staff-service-model`);
+const Staffs = require(`../Models/staffs-model`);
 const { timeDifferenceValidation, convertDateFormat } = require(`../Utils/utility-functions`);
 const db = require(`../Utils/database`);
 const { v4: uuidv4 } = require('uuid');
+const Reviews = require('../Models/reviews-model');
 
 /* -----------User Appointment Controllers------------- */
 
@@ -42,7 +45,7 @@ exports.userCreateAppointment = async (req, res) => {
             if (currWalletBalance < price) {
                 await transaction.rollback();
                 return res.status(400).json({
-                    success: false,
+                    success: false, 
                     message: "Insufficient wallet balance"
                 });
             }
@@ -54,6 +57,46 @@ exports.userCreateAppointment = async (req, res) => {
             });
         }
 
+        const service = await Services.findByPk(serviceId, { 
+            include: [{
+                model: Staffs,
+                through: {
+                    attributes: []
+                },
+                attributes: ['id', 'name']
+            }]
+        }, transaction);
+
+        if (!service) {
+            await transaction.rollback();
+            console.log(`Service with ID ${serviceId} not found.`);
+            return res.status(404).json({ // Use 404 for not found
+                success: false,
+                message: `Service with ID ${serviceId} not found.`
+            });
+        }
+
+        const availableStaff = service['Staff-Members'];
+
+        console.log(`Available Staff for Service ID ${serviceId}:`, availableStaff);
+
+        if(!availableStaff || availableStaff.length === 0){
+            await transaction.rollback();
+            console.log(`No staff available for service ID ${serviceId}.`);
+            return res.status(409).json({ // Use 409 Conflict or another appropriate status
+                success: false,
+                message: `Sorry, no staff members are currently available for the selected service.`
+            });
+        }
+
+         // Randomly select a staff member from the available list
+         const randomIndex = Math.floor(Math.random() * availableStaff.length);
+         const selectedStaff = availableStaff[randomIndex]; // Get the full staff object
+         const selectedStaffId = selectedStaff.id;
+         const selectedStaffName = selectedStaff.name; // Get the staff name
+ 
+         console.log(`Selected Staff ID: ${selectedStaffId}, Name: ${selectedStaffName} for Service ID: ${serviceId}`);
+
         const newAppointmentData = {
             id: newApptId,
             date: formattedDate,
@@ -61,7 +104,10 @@ exports.userCreateAppointment = async (req, res) => {
             price: price,
             paymentStatus: paymentStatus,
             userId: userId,
-            serviceId: serviceId
+            staffId: selectedStaffId,
+            staffName: selectedStaffName,
+            serviceId: serviceId,
+            serviceName: service.title,
         };
 
         const newAppointment = await Appointments.create(newAppointmentData, { transaction });
@@ -97,13 +143,45 @@ exports.getAllUserAppointments = async (req, res) => {
 
         const allAppointment = await Appointments.findAll({
           where: { userId: userId },
+          include:[
+            {
+            model : Staffs,
+            attributes: ['profilePicture'],
+            },
+
+            {
+                model: Reviews,
+                attributes: ['id', 'rating', 'comment'],
+            }
+        ],
           order : [['createdAt', 'DESC']]
         });
+
+        const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            time: data.startTime,
+            serviceId: data.serviceId,
+            serviceTitle: data.serviceName,
+            staff: data.staffId,
+            staffName: data.staffName,
+            staffProfilePicture: data['Staff-Member'].profilePicture,
+            refundStatus : data.refundStatus,
+            price: data.price,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            review: data.Review ? {
+                id: data.Review.id,
+                rating: data.Review.rating,
+                comment: data.Review.comment
+            } : null
+        }))
 
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: allAppointment
+            data: formatedAppointmentData
         });
         
     } catch (error) {
@@ -115,8 +193,6 @@ exports.getAllUserAppointments = async (req, res) => {
         });
     }
 }
-
-
 
 
 exports.userRescheduleAppointment = async (req, res) => {
@@ -181,7 +257,6 @@ exports.userRescheduleAppointment = async (req, res) => {
 }
 
 //TODO: Add canceled mail service & time contraint
-
 exports.userCancelAppointment = async (req, res) => {
     const transaction = await db.transaction();
     try {
@@ -239,9 +314,11 @@ exports.userCancelAppointment = async (req, res) => {
             revenueData.totalRevenue -= appointment.price;
             revenueData.totalRefunds += appointment.price;
             await revenueData.save({ transaction });
-            
             refundStatus = "Refund Processed";
         }
+
+        appointment.refundStatus = true;
+        await appointment.save({ transaction });
 
         await transaction.commit();
 
@@ -265,7 +342,7 @@ exports.userCancelAppointment = async (req, res) => {
 
 
 
-/* -----------Admin Appointment Controllers------------- */
+/*------------Admin Appointment Controllers-------------*/
 
 exports.getAllAppointments = async (req, res) => {
     try {
@@ -316,7 +393,6 @@ exports.getAllAppointments = async (req, res) => {
 
 exports.adminRescheduleAppointment = async (req, res) => {
     try {
-
         const { appointmentId, date, startTime } = req.body;
 
         if (!appointmentId || !date || !startTime) {
@@ -429,6 +505,65 @@ exports.adminCancelAppointment = async (req, res) => {
 
         console.error(error)
         return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+/* -------------Staff Appointments Controllers------------------ */
+exports.getAllStaffAppointments = async (req, res) => {
+    try {
+        const staffId = req.staff.id;
+
+        const allAppointment = await Appointments.findAll({
+            where: { staffId: staffId },
+            include:[
+                {
+                    model : Users,
+                    attributes: ['name']
+                },
+                { 
+                    model: Reviews,
+                    attributes: ['id', 'rating', 'comment', 'isStaffResponded', 'staffResponse'],
+                }
+            ],
+            order : [['createdAt', 'DESC']]
+        });
+
+/*         const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            time: data.startTime,
+            serviceTitle: data.serviceName,
+            userId: data.userId,
+            userName: data.User.name,
+            staffId: data.staffId,
+            serviceId: data.serviceId,
+            price: data.price,
+            refundStatus: data.refundStatus,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            review: data.Review ? {
+                id: data.Review.id,
+                rating: data.Review.rating,
+                comment: data.Review.comment,
+                isStaffResponded: data.Review.isStaffResponded,
+                staffResponse: data.Review.staffResponse
+            } : null,
+        })) */
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All the staff appointments',
+            data: allAppointment
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
             success: false,
             message: 'Internal server error',
             error: error.message

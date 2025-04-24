@@ -22,10 +22,7 @@ function isStringInvalid(string) {
 }; */
 
 const generateAccessToken = (id, role) => {
-    return jwt.sign(
-      { id: id, role: role },
-      process.env.JWT_SECRET_KEY
-    );
+    return jwt.sign({ id: id, role: role }, process.env.JWT_SECRET_KEY );
   };
 
 exports.createUser = async (req, res) => {
@@ -235,7 +232,7 @@ exports.loginAdmin = async (req, res) => {
             });
         }
 
-        const token = generateAccessToken(admin.id, admin.name, 'admin', admin.email);
+        const token = generateAccessToken(admin.id, 'admin');
 
         return res.status(200).json({
             success: true,
@@ -280,14 +277,16 @@ exports.loginStaff = async (req, res) => {
         
         //const isMatch = await bcrypt.compare(password, staff.password);
         
-        if (staff.password!==password) {
+        if (staff.password !== password) {
             return res.status(401).json({
                 success: false,
                 message: `Invalid credentials!`
             });
         }
 
-        const token = generateAccessToken(staff.id, staff.name, 'staff', staff.email);
+        console.log('Staff Data', staff.id)
+
+        const token = generateAccessToken(staff.id, 'staff');
 
         return res.status(200).json({
             success: true,
