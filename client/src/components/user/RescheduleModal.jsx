@@ -15,7 +15,7 @@ import {
   startOfDay,
 } from "date-fns";
 
-function RescheduleModal({ show, setShow, selectedAppt, onRescheduleSuccess }) {
+function RescheduleModal({ show, setShowReschedule, selectedAppt, onRescheduleSuccess }) { // Corrected prop name
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -35,7 +35,7 @@ function RescheduleModal({ show, setShow, selectedAppt, onRescheduleSuccess }) {
   }, [show, selectedAppt]);
 
   const handleClose = () => {
-    setShow(false);
+    setShowReschedule(false); // Corrected function call
     setError("");
     setSuccess("");
     setSelectedDate(null);
@@ -125,7 +125,7 @@ function RescheduleModal({ show, setShow, selectedAppt, onRescheduleSuccess }) {
   };
 
   return (
-    <Modal show={show} onHide={handleClose}>
+    <Modal show={show} onHide={handleClose} centered>
       <Modal.Header closeButton>
         <Modal.Title>Reschedule Appointment</Modal.Title>
       </Modal.Header>
@@ -138,7 +138,7 @@ function RescheduleModal({ show, setShow, selectedAppt, onRescheduleSuccess }) {
             <Form.Label className="fw-bold">Current Appointment</Form.Label>
             <Form.Control
               type="text"
-              value={selectedAppt ? `${selectedAppt.title} - ${selectedAppt.date} ${selectedAppt.startTime}` : ''}
+              value={selectedAppt ? `${selectedAppt.serviceTitle} - ${selectedAppt.date} ${selectedAppt.startTime}` : ''}
               disabled
             />
           </Form.Group>

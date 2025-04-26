@@ -53,7 +53,7 @@ exports.userReviewResponse = async (req, res) => {
             rating,
             userId,
             staffId : appointment.staffId,
-            appointmentId,
+            appointmentsId: appointmentId,
             ...(reviewComment && { comment: reviewComment })
         };
 
@@ -78,6 +78,7 @@ exports.userReviewResponse = async (req, res) => {
 
 exports.staffReviewResponse = async (req, res) => {
     try {
+        const staffId = req.staff.id;
         const { reviewId, responseMessage } = req.body;
 
         if (!reviewId || !responseMessage) {
@@ -94,6 +95,19 @@ exports.staffReviewResponse = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Review not found'
+            });
+        }
+
+        if (review.isStaffResponded) {
+            return res.status(400).json({
+                success: false,
+                message: 'Staff has already responded to this review'
+            });
+        }
+        if (review.staffId !== staffId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to respond to this review'
             });
         }
 

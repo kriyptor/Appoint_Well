@@ -87,9 +87,6 @@ Appointments.belongsTo(Services, { foreignKey: `serviceId`});
 Appointments.hasOne(Reviews, { foreignKey: `appointmentsId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
-Reviews.hasOne(Appointments, { foreignKey: `ReviewId`, onDelete: `CASCADE` });
-Appointments.belongsTo(Reviews, { foreignKey: `ReviewId` });
-
 //TODO:create admin and revenue data
 
 /* async function createData() {

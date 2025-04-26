@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.post('/create', authenticate(['user']), appointmentController.userCreateAppointment);
 
-router.get('/user/all', authenticate(['user']), appointmentController.getAllUserAppointments);
+router.get('/user/upcoming', authenticate(['user']), appointmentController.getUpcomingUserAppointments);
+
+router.get('/user/previous', authenticate(['user']), appointmentController.getPreviousUserAppointments);
+
+router.get('/user/canceled', authenticate(['user']), appointmentController.getCanceledUserAppointments);
 
 router.patch('/:id/reschedule', authenticate(['user']), appointmentController.userRescheduleAppointment);
 

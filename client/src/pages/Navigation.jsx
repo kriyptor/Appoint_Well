@@ -1,6 +1,6 @@
 // src/components/Navigation.jsx
 import React, { useState } from 'react';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Navbar, Nav, NavDropdown, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,51 +18,88 @@ function Navigation() {
   return (
     <Navbar bg="primary" expand="lg" sticky="top">
       <Container>
-        <Navbar.Brand as={Link} to={homeNav}>AppointWell</Navbar.Brand>
+        <Navbar.Brand as={Link} to={homeNav}>
+          AppointWell
+        </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {currentUser ? (
               <>
                 {/* User-specific routes */}
-                {hasRole('user') && (
+                {hasRole("user") && (
                   <>
-                  {/* <Nav.Link as={Link} to="/user-dashboard/">User Dashboard</Nav.Link> */}
-                  <Nav.Link as={Link} to="/user/profile">Profile</Nav.Link>
-                  <Nav.Link as={Link} to="/user/">Book</Nav.Link>
-                  <Nav.Link as={Link} to="/user/appointments">Appointments</Nav.Link>
-                  <Nav.Link as={Link} to="/user/services">Services</Nav.Link>
-                  <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>
+                    {/* <Nav.Link as={Link} to="/user-dashboard/">User Dashboard</Nav.Link> */}
+                    <Nav.Link as={Link} to="/user/profile">
+                      Profile
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/user/">
+                      Book
+                    </Nav.Link>
+                      <NavDropdown title="Your Appointments" id="basic-nav-dropdown">
+                        <NavDropdown.Item as={Link} to="/user/appointment/upcoming">
+                          Upcoming Appointments
+                        </NavDropdown.Item>
+                        <NavDropdown.Item as={Link} to="/user/appointment/previous">
+                          Previous Appointments
+                        </NavDropdown.Item>
+                        <NavDropdown.Item as={Link} to="/user/appointment/cancelled">
+                          Canceled Appointments
+                        </NavDropdown.Item>
+                      </NavDropdown>
+                    <Nav.Link as={Link} to="/user/services">
+                      Services
+                    </Nav.Link>
+                    <Button
+                      onClick={() => setModalShow(true)}
+                      variant="success"
+                    >
+                      Wallet
+                    </Button>
                   </>
                 )}
-                
+
                 {/* Staff-specific routes */}
-                {hasRole('staff') && (
-                  <Nav.Link as={Link} to="/staff-dashboard">Staff Dashboard</Nav.Link>
+                {hasRole("staff") && (
+                  <Nav.Link as={Link} to="/staff-dashboard">
+                    Staff Dashboard
+                  </Nav.Link>
                 )}
-                
+
                 {/* Admin-specific routes */}
-                {hasRole('admin') && (
+                {hasRole("admin") && (
                   <>
-                    <Nav.Link as={Link} to="/admin/profile">Profile</Nav.Link>
-                    <Nav.Link as={Link} to="/admin">Manage Services</Nav.Link>
-                    <Nav.Link as={Link} to="/admin/staff">Manage Staffs</Nav.Link>
-                    <Nav.Link as={Link} to="/admin/revenue">Revenue Analytics</Nav.Link>
+                    <Nav.Link as={Link} to="/admin/profile">
+                      Profile
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/admin">
+                      Manage Services
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/admin/staff">
+                      Manage Staffs
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/admin/revenue">
+                      Revenue Analytics
+                    </Nav.Link>
                   </>
                 )}
               </>
             ) : (
-              <Nav.Link as={Link} to="/login">Login</Nav.Link>
+              <Nav.Link as={Link} to="/login">
+                Login
+              </Nav.Link>
             )}
           </Nav>
-          
+
           {currentUser && (
             <Nav>
               {/* <Navbar.Text className="me-3">
                 Hi!, <strong>{currentUser.name}</strong>
               </Navbar.Text> */}
               {/* {currentUser.role === 'user' && <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>} */}
-              <Button variant="danger" onClick={handleLogout}>Logout</Button>
+              <Button variant="danger" onClick={handleLogout}>
+                Logout
+              </Button>
             </Nav>
           )}
         </Navbar.Collapse>

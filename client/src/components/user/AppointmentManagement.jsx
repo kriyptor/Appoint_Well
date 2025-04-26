@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ListGroup, Button, Modal, Nav, Container, Spinner, Alert } from 'react-bootstrap';
+import { Container, Spinner, Alert, Nav, Badge } from 'react-bootstrap';
 import AppointmentCard from './AppointmentCard';
 import axios from 'axios';
 import RescheduleModal from './RescheduleModal';
-import GrockCard from './GrockCard';
+import ReviewModal from './ReviewModal';
 
 const AppointmentManagement = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const { authToken } = useAuth();
   const [appointments, setAppointments] = useState([]);
-  const [show, setShow] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
-  const { authToken } = useAuth();
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -23,7 +24,16 @@ const AppointmentManagement = () => {
       const response = await axios.get(`${BASE_URL}/appointment/user/all`, {
         headers: { Authorization: authToken }
       });
-      setAppointments(response.data.data);
+      
+      // Add console.log to debug
+      console.log('Fetched appointments:', response.data);
+      
+      // Make sure we're setting the correct data path
+      if (response.data && response.data.data) {
+        setAppointments(response.data.data);
+      } else {
+        setError('No appointment data received');
+      }
     } catch (error) {
       setError('Failed to fetch appointments. Please try again.');
       console.error('Error fetching appointments:', error);
@@ -43,9 +53,8 @@ const AppointmentManagement = () => {
         {},
         { headers: { Authorization: authToken } }
       );
-
       setAppointments(appointments.map(appt => 
-        appt.id === id ? { ...appt, status: 'cancelled' } : appt
+        appt.id === id ? { ...appt, status: 'canceled' } : appt
       ));
     } catch (error) {
       setError('Failed to cancel appointment. Please try again.');
@@ -57,7 +66,7 @@ const AppointmentManagement = () => {
     const appointment = appointments.find((appt) => appt.id === id);
     if (appointment) {
       setSelectedAppt(appointment);
-      setShow(true);
+      setShowReschedule(true);
     }
   };
 
@@ -67,67 +76,138 @@ const AppointmentManagement = () => {
     ));
   };
 
+  const handleReview = (id) => {
+    const appointment = appointments.find((appt) => appt.id === id);
+    if (appointment) {
+      setSelectedAppt(appointment);
+      setShowReview(true);
+    }
+  };
+
+  const handleReviewSuccess = (updatedAppointment) => {
+    setAppointments(appointments.map(appt => 
+      appt.id === updatedAppointment.id ? updatedAppointment : appt
+    ));
+  };
+
   const filteredAppointments = appointments.filter(appt => {
-    const isUpcoming = new Date(appt.date) >= new Date().setHours(0, 0, 0, 0);
-    return activeTab === 'upcoming' ? isUpcoming : !isUpcoming;
+    if (!appt || !appt.date) return false; // Safety check
+    
+    const todayMidnight = new Date().setHours(0, 0, 0, 0);
+    const apptDate = new Date(appt.date).setHours(0, 0, 0, 0);
+    
+    switch (activeTab) {
+      case 'upcoming':
+        return (appt.status === 'upcoming' || appt.status === 'rescheduled') && 
+               apptDate >= todayMidnight;
+      case 'previous':
+        return apptDate < todayMidnight && 
+               appt.status !== 'canceled';
+      case 'canceled':
+        return appt.status === 'canceled';
+      default:
+        return false;
+    }
   });
 
-  if (loading) {
-    return (
-      <Container className="text-center py-5">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </Container>
-    );
-  }
-
   return (
-    <Container>
-      <h2 className="mt-3 text-center">My Appointments</h2>
+    <Container className="py-4">
+      {/* Add this debug section during development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-3 p-3 border rounded">
+          <small>Debug Info:</small>
+          <pre className="mb-0">
+            {JSON.stringify({
+              totalAppointments: appointments.length,
+              filteredCount: filteredAppointments.length,
+              activeTab,
+              loading
+            }, null, 2)}
+          </pre>
+        </div>
+      )}
       
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">My Appointments</h2>
+        <div className="d-flex gap-2">
+          <Badge bg="primary" pill>
+            Upcoming: {appointments.filter(a => a.status === 'upcoming').length}
+          </Badge>
+          <Badge bg="secondary" pill>
+            Previous: {appointments.filter(a => a.status !== 'upcoming' && a.status !== 'canceled').length}
+          </Badge>
+          <Badge bg="danger" pill>
+            Canceled: {appointments.filter(a => a.status === 'canceled').length}
+          </Badge>
+        </div>
+      </div>
+
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError('')}>
+        <Alert variant="danger" dismissible onClose={() => setError("")}>
+          <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
         </Alert>
       )}
-      
-      <Container className="mt-3">
-        <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab}>
-          <Nav.Item>
-            <Nav.Link eventKey="upcoming">Upcoming Appointments</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="previous">Previous Appointments</Nav.Link>
-          </Nav.Item>
-        </Nav>
-      </Container>
 
-      <div className="mt-3">
-        {filteredAppointments.length === 0 ? (
-          <p className="text-center text-muted">No {activeTab} appointments found.</p>
-        ) : (
-          filteredAppointments.map((appt) => (
+      <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab} className="mb-4">
+        <Nav.Item>
+          <Nav.Link eventKey="upcoming">
+            <i className="bi bi-calendar-check me-1"></i>
+            Upcoming
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="previous">
+            <i className="bi bi-calendar-x me-1"></i>
+            Previous
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="canceled">
+            <i className="bi bi-calendar-minus me-1"></i>
+            Canceled
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
+
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+          <p className="text-muted mt-2">Loading appointments...</p>
+        </div>
+      ) : filteredAppointments.length === 0 ? (
+        <div className="text-center py-5">
+          <i className="bi bi-calendar-x display-1 text-muted"></i>
+          <p className="text-muted mt-3">
+            No {activeTab} appointments found.
+          </p>
+        </div>
+      ) : (
+        <div className="appointment-list">
+          {filteredAppointments.map((appt) => (
             <AppointmentCard
               key={appt.id}
-              id={appt.id}
-              title={appt.title}
-              date={appt.date}
-              time={appt.startTime}
-              price={appt.price}
-              status={appt.status}
+              {...appt}
+              activeTab={activeTab}
               onCancel={() => handleCancel(appt.id)}
               onReschedule={() => handleReschedule(appt.id)}
+              onReview={() => handleReview(appt.id)}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <RescheduleModal 
-        show={show} 
-        setShow={setShow} 
-        selectedAppt={selectedAppt} 
+      <RescheduleModal
+        show={showReschedule}
+        setShow={setShowReschedule}
+        selectedAppt={selectedAppt}
         onRescheduleSuccess={handleRescheduleSuccess}
+      />
+      <ReviewModal
+        show={showReview}
+        setShow={setShowReview}
+        selectedAppt={selectedAppt}
+        onReviewSuccess={handleReviewSuccess}
       />
     </Container>
   );
