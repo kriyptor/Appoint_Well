@@ -61,9 +61,20 @@ function Navigation() {
 
                 {/* Staff-specific routes */}
                 {hasRole("staff") && (
-                  <Nav.Link as={Link} to="/staff-dashboard">
-                    Staff Dashboard
+                  <>
+                  <Nav.Link as={Link} to="/staff/profile">
+                    Profile
                   </Nav.Link>
+                  <Nav.Link as={Link} to="/staff/">
+                    Upcoming Appointments
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/staff/previous">
+                    Previous Appointments
+                  </Nav.Link>
+                  <Nav.Link as={Link} to="/staff/cancelled">
+                    Canceled Appointments
+                  </Nav.Link>
+                  </>
                 )}
 
                 {/* Admin-specific routes */}
@@ -93,10 +104,6 @@ function Navigation() {
 
           {currentUser && (
             <Nav>
-              {/* <Navbar.Text className="me-3">
-                Hi!, <strong>{currentUser.name}</strong>
-              </Navbar.Text> */}
-              {/* {currentUser.role === 'user' && <Button onClick={() => setModalShow(true)} variant="success">Wallet</Button>} */}
               <Button variant="danger" onClick={handleLogout}>
                 Logout
               </Button>

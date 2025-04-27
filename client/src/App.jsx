@@ -40,7 +40,7 @@ function App() {
             
             {/* Staff-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
-              <Route path="/staff-dashboard" element={<StaffDashboard />} />
+              <Route path="/staff/*" element={<StaffDashboard />} />
               {/* Add more staff routes as needed */}
             </Route>
             

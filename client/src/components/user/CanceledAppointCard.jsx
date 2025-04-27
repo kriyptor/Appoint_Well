@@ -8,11 +8,10 @@ function CanceledAppointCard({
   appointmentTime,
   price,
   refundStatus,
-  staffName,
-  staffImage,
+  userName,
+  userImage,
 }) {
  const formattedDate = format(new Date(appointmentDate), "MMM dd, yyyy");
- 
    return (
      <Row className="align-items-center">
      <Col md={12} className="mb-3">
@@ -54,8 +53,8 @@ function CanceledAppointCard({
                }}
              >
                <img
-                 src={staffImage}
-                 alt={staffName}
+                 src={userImage}
+                 alt={userName}
                  className="rounded-circle me-3"
                  style={{
                    width: 75,
@@ -67,10 +66,10 @@ function CanceledAppointCard({
                />
                <div>
                  <div className="text-muted" style={{ fontSize: "0.9rem" }}>
-                   Your Stylist
+                   Your Client
                  </div>
                  <div className="fw-semibold text-dark" style={{ fontSize: "1.05rem" }}>
-                   {staffName}
+                   {userImage}
                  </div>
                </div>
              </div>

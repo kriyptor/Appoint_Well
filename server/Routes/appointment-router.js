@@ -19,7 +19,11 @@ router.patch('/cancel/:id', authenticate(['user']), appointmentController.userCa
 
 /* -------Admin Routes-------- */
 
-router.get('/admin/all', authenticate(['admin']), appointmentController.getAllAppointments);
+router.get('/admin/upcoming', authenticate(['admin']), appointmentController.getAllUpcomingAppointments);
+
+router.get('/admin/previous', authenticate(['admin']), appointmentController.getAllPreviousAppointments);
+
+router.get('/admin/canceled', authenticate(['admin']), appointmentController.getAllCanceledAppointments);
 
 router.patch('/:id/reschedule/admin', authenticate(['admin']), appointmentController.adminRescheduleAppointment);
 
@@ -28,6 +32,8 @@ router.patch('/:id/cancel/admin', authenticate(['admin']), appointmentController
 
 /* -------Staff Routes-------- */
 
-router.get('/staff/all', authenticate(['staff']), appointmentController.getAllStaffAppointments);
+router.get('/staff/upcoming', authenticate(['staff']), appointmentController.getUpcomingStaffAppointments);
+
+router.get('/staff/previous', authenticate(['staff']), appointmentController.getPreviousStaffAppointments);
 
 module.exports = router;

@@ -1,18 +1,17 @@
-import PrevoiusAppointCard from './PrevoiusAppointCard';
+import PrevoiusStaffAppointCard from './PrevoiusStaffAppointCard';
 import { Container, Row, Col, Spinner, Alert } from "react-bootstrap";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useAuth } from '../../context/AuthContext';
-import ReviewModal from './ReviewModal';
-
+import StaffReviewModal from './StaffReviewModal';
+import axios from "axios";
 
 function PrevoiusAppointments() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { authToken } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
+  const [appointments, setAppointments] = useState([]);
   const [selectedAppt, setSelectedAppt] = useState(null);
 
   const handleReview = (id) => {
@@ -29,7 +28,7 @@ function PrevoiusAppointments() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/appointment/user/previous`, {
+        const response = await axios.get(`${BASE_URL}/appointment/staff/previous`, {
           headers: { Authorization: authToken }
         });
         if (response.data && response.data.data) {
@@ -66,15 +65,15 @@ function PrevoiusAppointments() {
                 </Alert>
             ) : (
                 appointments.map((appointment) => (
-                  <PrevoiusAppointCard
+                  <PrevoiusStaffAppointCard
                   key={appointment.id}
                   serviceName={appointment.serviceTitle}
                   appointmentDate={appointment.date}
                   appointmentTime={appointment.startTime}
                   price={appointment.price}
                   status={appointment.status}
-                  staffName={appointment.staffName}
-                  staffImage={appointment.staffProfilePicture}
+                  userName={appointment.userName}
+                  userImage={appointment.userProfilePicture}
                   review={appointment.review}
                   handleReview={() => handleReview(appointment.id)}
                 />
@@ -82,7 +81,7 @@ function PrevoiusAppointments() {
             )}
             </Col>
           </Row>
-        <ReviewModal
+        <StaffReviewModal
          show={showReview}
          setShow={setShowReview}
          selectedAppt={selectedAppt}

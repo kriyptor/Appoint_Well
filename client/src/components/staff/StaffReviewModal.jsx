@@ -6,8 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 const ReviewModal = ({ show, setShow, selectedAppt, onReviewSuccess }) => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { authToken } = useAuth();
-  
-  const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,7 +14,6 @@ const ReviewModal = ({ show, setShow, selectedAppt, onReviewSuccess }) => {
   // Reset form when modal opens
   useEffect(() => {
     if (show) {
-      setRating(5);
       setComment('');
       setError('');
       setSuccess('');
@@ -33,13 +30,13 @@ const ReviewModal = ({ show, setShow, selectedAppt, onReviewSuccess }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post(`${BASE_URL}/review/user/create`,
-        { appointmentId : selectedAppt.id, rating : rating, reviewComment : comment },
+      const response = await axios.post(`${BASE_URL}/review/staff/response`,
+        { reviewId : selectedAppt.review.id, responseMessage : comment },
         { headers: { Authorization: authToken } }
       );
 
       setSuccess('Review submitted successfully!');
-      onReviewSuccess({ ...selectedAppt, review: { rating, comment } });
+      onReviewSuccess({ ...selectedAppt, review: { isStaffResponded : true, staffResponse: comment } });
       
       // Close modal after showing success message
       setTimeout(() => {
@@ -75,34 +72,17 @@ const ReviewModal = ({ show, setShow, selectedAppt, onReviewSuccess }) => {
             <Form.Label>Appointment:</Form.Label>
             <Form.Control
               type="text"
-              value={`${selectedAppt?.serviceTitle} - Done By: ${selectedAppt?.staffName}`}
+              value={`${selectedAppt?.serviceTitle} For client: ${selectedAppt?.userName}`}
               readOnly
             />
           </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Rating</Form.Label>
-            <Form.Select
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              required
-            >
-              <option value={5}>5 - Excellent</option>
-              <option value={4}>4 - Good</option>
-              <option value={3}>3 - Average</option>
-              <option value={2}>2 - Poor</option>
-              <option value={1}>1 - Terrible</option>
-            </Form.Select>
-            <Form.Text className="text-muted">
-              Rate your experience with the service.
-            </Form.Text>
-          </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Your Review</Form.Label>
+            <Form.Label>Your Reply</Form.Label>
             <Form.Control
               as="textarea"
               rows={4}
-              placeholder="Share your experience..."
+              placeholder="Give your reply here..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               required

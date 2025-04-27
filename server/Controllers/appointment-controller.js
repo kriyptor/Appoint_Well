@@ -118,18 +118,6 @@ exports.userCreateAppointment = async (req, res) => {
             { by: price, where: { id: 1 }, transaction }
         );
 
-        /* const newReviewData = {
-            id: newReviewId,
-            rating: 0,
-            comment: '',
-            isStaffResponded: false,
-            staffResponse: '',
-            appointmentsId: newApptId,
-            staffId: selectedStaffId,
-            userId: userId
-        };
-        await Reviews.create(newReviewData, { transaction }); */
-
         await transaction.commit();
 
         return res.status(201).json({ 
@@ -178,7 +166,7 @@ exports.getUpcomingUserAppointments = async (req, res) => {
             price: data.price,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
-        }))
+        }));
 
         return res.status(200).json({ 
             success: true,
@@ -262,7 +250,7 @@ exports.getPreviousUserAppointments = async (req, res) => {
                 model: Reviews
             }
         ],
-          order : [['createdAt', 'DESC']]
+          order : [['date', 'DESC']]
         });
 
         const formatedAppointmentData = allAppointment.map((data) => ({
@@ -286,7 +274,7 @@ exports.getPreviousUserAppointments = async (req, res) => {
                 isStaffResponded: data.Review.isStaffResponded,
                 staffResponse: data.Review.staffResponse
             } : null
-        }))
+        }));
 
         return res.status(200).json({ 
             success: true,
@@ -454,18 +442,18 @@ exports.userCancelAppointment = async (req, res) => {
 
 /*------------Admin Appointment Controllers-------------*/
 
-exports.getAllAppointments = async (req, res) => {
+exports.getAllUpcomingAppointments = async (req, res) => {
     try {
 
         const allAppointment = await Appointments.findAll({
             include:[
                 {
                     model : Users,
-                    attributes: ['name']
+                    attributes: ['name', 'profilePicture'],
                 },
                 {
-                    model : Services,
-                    attributes: ['title']
+                    model : Staffs,
+                    attributes: ['profilePicture'],
                 }
             ],
             order : [['createdAt', 'DESC']]
@@ -473,11 +461,18 @@ exports.getAllAppointments = async (req, res) => {
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
+            userId: data.userId,
             userName: data.User.name,
-            serviceTitle: data.Service.title,
+            userProfilePicture: data.User.profilePicture,
+            serviceTitle: data.serviceName,
+            serviceId: data.serviceId,
             date: data.date,
             time: data.startTime,
-            staff: data.staffId,
+            staffId: data.staffId,
+            staffName: data.staffName,
+            staffProfilePicture: data['Staff-Member'].profilePicture,
+            refundStatus : data.refundStatus,
+            price: data.price,
             serviceId: data.serviceId,
             status: data.status,
             createdAt: data.createdAt,
@@ -487,6 +482,124 @@ exports.getAllAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
+            data: formatedAppointmentData
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.getAllPreviousAppointments = async (req, res) => {
+    try {
+
+        const allAppointment = await Appointments.findAll({
+            /* where: { [Op.or] : { date: { [Op.lt]: currentDate }, status : 'completed' } }, */
+            where: { status : 'completed' },
+            include:[
+                {
+                    model : Users,
+                    attributes: ['name', 'profilePicture'],
+                },
+                {
+                    model : Staffs,
+                    attributes: ['profilePicture'],
+                },
+                {
+                    model: Reviews
+                }
+            ],
+            order : [['date', 'DESC']]
+        });
+
+        const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            startTime: data.startTime,
+            serviceId: data.serviceId,
+            serviceTitle: data.serviceName,
+            userId: data.userId,
+            userName: data.User.name,
+            userProfilePicture: data.User.profilePicture,
+            staff: data.staffId,
+            staffName: data.staffName,
+            staffProfilePicture: data['Staff-Member'].profilePicture,
+            refundStatus : data.refundStatus,
+            price: data.price,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            review: data.Review ? {
+                id: data.Review.id,
+                rating: data.Review.rating,
+                comment: data.Review.comment,
+                isStaffResponded: data.Review.isStaffResponded,
+                staffResponse: data.Review.staffResponse
+            } : null
+        }))
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All the appointments',
+            data: formatedAppointmentData
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+exports.getAllCanceledAppointments = async (req, res) => {
+    try {
+
+        const allAppointment = await Appointments.findAll({
+          where: { status: 'canceled' },
+          include:[
+            {
+                model : Staffs,
+                attributes: ['profilePicture'],
+            },
+            {
+                model : Users,
+                attributes: ['name', 'profilePicture'],
+            }
+        ],
+          order : [['date']]
+        });
+
+        const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            startTime: data.startTime,
+            serviceId: data.serviceId,
+            serviceTitle: data.serviceName,
+            userId: data.userId,
+            userName: data.User.name,
+            userProfilePicture: data.User.profilePicture,
+            staff: data.staffId,
+            staffName: data.staffName,
+            staffProfilePicture: data['Staff-Member'].profilePicture,
+            refundStatus : data.refundStatus,
+            price: data.price,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+        }))
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All the upcoming appointments',
             data: formatedAppointmentData
         });
         
@@ -623,37 +736,90 @@ exports.adminCancelAppointment = async (req, res) => {
 }
 
 /* -------------Staff Appointments Controllers------------------ */
-exports.getAllStaffAppointments = async (req, res) => {
+exports.getUpcomingStaffAppointments = async (req, res) => {
     try {
         const staffId = req.staff.id;
 
         const allAppointment = await Appointments.findAll({
-            where: { staffId: staffId },
+            where: { staffId: staffId, [Op.or]: [{ status: 'scheduled' }, { status: 'rescheduled' }] },
             include:[
-                {
-                    model : Users,
-                    attributes: ['name']
-                },
-                { 
-                    model: Reviews,
-                    attributes: ['id', 'rating', 'comment', 'isStaffResponded', 'staffResponse'],
-                }
-            ],
-            order : [['createdAt', 'DESC']]
+              {
+              model : Users,
+              attributes: ['name', 'profilePicture'],
+              }
+          ],
+            order : [['date']]
+          });
+
+          const formatedAppointmentData = allAppointment.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            startTime: data.startTime,
+            serviceId: data.serviceId,
+            serviceTitle: data.serviceName,
+            staff: data.staffId,
+            staffName: data.staffName,
+            userId: data.userId,
+            userName: data.User.name,
+            userProfilePicture: data.User.profilePicture,
+            refundStatus : data.refundStatus,
+            price: data.price,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+        }))
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All the staff appointments',
+            data: formatedAppointmentData
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.getPreviousStaffAppointments = async (req, res) => {
+    try {
+
+        const staffId = req.staff.id;
+        const currentDate = new Date().toISOString().split('T')[0];
+        
+        const allAppointment = await Appointments.findAll({
+          where: { staffId: staffId, [Op.or] : { date: { [Op.lt]: currentDate }, status : 'completed' } },
+          include:[
+            {
+            model : Users,
+            attributes: ['name','profilePicture'],
+            },
+
+            {
+                model: Reviews
+            }
+        ],
+          order : [['date', 'DESC']]
         });
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
             status: data.status,
             date: data.date,
-            time: data.startTime,
+            startTime: data.startTime,
+            serviceId: data.serviceId,
             serviceTitle: data.serviceName,
+            staff: data.staffId,
+            staffName: data.staffName,
             userId: data.userId,
             userName: data.User.name,
-            staffId: data.staffId,
-            serviceId: data.serviceId,
+            userProfilePicture: data.User.profilePicture,
+            refundStatus : data.refundStatus,
             price: data.price,
-            refundStatus: data.refundStatus,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             review: data.Review ? {
@@ -662,12 +828,12 @@ exports.getAllStaffAppointments = async (req, res) => {
                 comment: data.Review.comment,
                 isStaffResponded: data.Review.isStaffResponded,
                 staffResponse: data.Review.staffResponse
-            } : null,
+            } : null
         }))
 
         return res.status(200).json({ 
             success: true,
-            message: 'All the staff appointments',
+            message: 'All the appointments',
             data: formatedAppointmentData
         });
         
