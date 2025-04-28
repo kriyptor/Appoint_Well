@@ -4,12 +4,6 @@ import UserProfileModal from './UserProfileModal';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
-const initialAdmin = {
-  name: "Shivak",
-  email: "user@example.com",
-  role: "user"
-};
-
 function UserProfile() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [userData, setUserData] = useState({});
@@ -17,29 +11,6 @@ function UserProfile() {
   const { authToken } = useAuth();
 
   const handleEdit = () => setShowModal(true);
-
-/*   const handleUpdate = async (updatedData) => {
-    try {
-        
-        const { name, email, profilePicture } = updatedData;
-
-        const response = await axios.post(`${BASE_URL}/auth/user/update`, {
-          name,
-          email,
-          password,
-          profilePicture
-        }, {
-          headers: {
-            Authorization: authToken,
-          },
-        })
-        setUserData(updatedData);
-        console.log(name, email, profilePicture, password);
-        setShowModal(false);
-    } catch (error) {
-        console.error('Error updating user data:', error);
-    }
-  }; */
 
   useEffect(() => {
    const fetchUserData = async () => {

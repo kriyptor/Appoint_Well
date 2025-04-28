@@ -1,11 +1,11 @@
-import PrevoiusStaffAppointCard from './PrevoiusStaffAppointCard';
 import { Container, Row, Col, Spinner, Alert } from "react-bootstrap";
 import { useEffect, useState } from "react";
 import { useAuth } from '../../context/AuthContext';
 import StaffReviewModal from './StaffReviewModal';
 import axios from "axios";
+import PreviousStaffAppointCard from "./PrevoiusStaffAppointCard";
 
-function PrevoiusAppointments() {
+function PreviousStaffAppointments() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { authToken } = useAuth();
   const [error, setError] = useState(null);
@@ -65,18 +65,18 @@ function PrevoiusAppointments() {
                 </Alert>
             ) : (
                 appointments.map((appointment) => (
-                  <PrevoiusStaffAppointCard
-                  key={appointment.id}
-                  serviceName={appointment.serviceTitle}
-                  appointmentDate={appointment.date}
-                  appointmentTime={appointment.startTime}
-                  price={appointment.price}
-                  status={appointment.status}
-                  userName={appointment.userName}
-                  userImage={appointment.userProfilePicture}
-                  review={appointment.review}
-                  handleReview={() => handleReview(appointment.id)}
-                />
+                 <PreviousStaffAppointCard
+                 key={appointment.id}
+                 serviceName={appointment.serviceTitle}
+                 appointmentDate={appointment.date}
+                 appointmentTime={appointment.startTime}
+                 price={appointment.price}
+                 status={appointment.status}
+                 userName={appointment.userName}
+                 userImage={appointment.userProfilePicture}
+                 review={appointment.review}
+                 handleReview={() => handleReview(appointment.id)}
+                 />
                 ))
             )}
             </Col>
@@ -91,4 +91,4 @@ function PrevoiusAppointments() {
   )
 }
 
-export default PrevoiusAppointments
+export default PreviousStaffAppointments

@@ -20,5 +20,7 @@ router.post('/admin/sign-in', authController.loginAdmin);
 /* ------------Staff Auth Routes-------------- */
 router.post('/staff/sign-in', authController.loginStaff);
 
+router.get('/staff/data', authenticate(['staff']), authController.getStaffData);
+
 
 module.exports = router;

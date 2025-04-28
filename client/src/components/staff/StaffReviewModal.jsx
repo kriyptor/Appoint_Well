@@ -36,7 +36,14 @@ const ReviewModal = ({ show, setShow, selectedAppt, onReviewSuccess }) => {
       );
 
       setSuccess('Review submitted successfully!');
-      onReviewSuccess({ ...selectedAppt, review: { isStaffResponded : true, staffResponse: comment } });
+      onReviewSuccess({
+        ...selectedAppt,
+        review: {
+          ...selectedAppt.review,
+          isStaffResponded: true,
+          staffResponse: comment,
+        },
+      });
       
       // Close modal after showing success message
       setTimeout(() => {

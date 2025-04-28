@@ -303,3 +303,33 @@ exports.loginStaff = async (req, res) => {
         });
     }
 }
+
+exports.getStaffData = async (req, res) => {
+    try {
+        
+        const staffId = req.staff.id;
+    
+        const staff = await Staff.findOne({ where: { id: staffId } });
+
+        if (!staff) {
+            return res.status(404).json({
+                success: false,
+                message: `Staff does not exist!`
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'User Data',
+            data: staff
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}

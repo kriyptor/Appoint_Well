@@ -445,7 +445,12 @@ exports.userCancelAppointment = async (req, res) => {
 exports.getAllUpcomingAppointments = async (req, res) => {
     try {
 
-        const allAppointment = await Appointments.findAll({
+        const page = parseInt(req.query.page || 1);
+        const limit = parseInt(req.query.limit || 5);
+        const offset = (page - 1) * limit;
+
+        const { count, rows: allAppointment } = await Appointments.findAndCountAll({
+            where: { [Op.or]: [{ status: 'scheduled' }, { status: 'rescheduled' }] },
             include:[
                 {
                     model : Users,
@@ -456,8 +461,15 @@ exports.getAllUpcomingAppointments = async (req, res) => {
                     attributes: ['profilePicture'],
                 }
             ],
-            order : [['createdAt', 'DESC']]
+            limit: limit,
+            offset: offset,
+            order : [['date', 'DESC']]
         });
+
+        const totalPages = Math.ceil(count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPreviousPage = page > 1;
+       
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
@@ -482,7 +494,15 @@ exports.getAllUpcomingAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: formatedAppointmentData
+            data: formatedAppointmentData,
+            pagination : {
+                totalItems : count,
+                totalPages : totalPages,
+                currentPage : page,
+                itemsPerPage : limit,
+                hasNextPage : hasNextPage,
+                hasPrevPage : hasPreviousPage
+            }
         });
         
     } catch (error) {
@@ -792,7 +812,7 @@ exports.getPreviousStaffAppointments = async (req, res) => {
         const currentDate = new Date().toISOString().split('T')[0];
         
         const allAppointment = await Appointments.findAll({
-          where: { staffId: staffId, [Op.or] : { date: { [Op.lt]: currentDate }, status : 'completed' } },
+          where: { staffId: staffId, [Op.or] : [{ date: { [Op.lt]: currentDate }, status : 'completed' }] },
           include:[
             {
             model : Users,

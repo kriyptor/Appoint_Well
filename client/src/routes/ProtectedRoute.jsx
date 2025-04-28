@@ -1,24 +1,27 @@
 // src/components/ProtectedRoute.jsx
-import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Spinner } from 'react-bootstrap';
 
-// This component handles both authentication and role-based authorization
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { currentUser, hasRole } = useAuth();
-  
-  // If user is not logged in, redirect to login page
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <Spinner animation="border" />
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
-  
-  // If roles are specified and user doesn't have any of the required roles
-  if (allowedRoles && !hasRole(allowedRoles)) {
-    // Redirect to an unauthorized page or dashboard
+
+  if (!allowedRoles.includes(currentUser.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
-  
-  // If user is logged in and has the required role, render the children
+
   return <Outlet />;
 };
 

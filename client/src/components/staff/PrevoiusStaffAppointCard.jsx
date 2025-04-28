@@ -2,7 +2,7 @@ import React from "react";
 import { Card, Button, Badge, Row, Col } from "react-bootstrap";
 import { format } from "date-fns";
 
-function PrevoiusStaffAppointCard({
+function PreviousStaffAppointCard({
   serviceName,
   appointmentDate,
   appointmentTime,
@@ -17,7 +17,7 @@ function PrevoiusStaffAppointCard({
   return (
     <Row className="align-items-center">
       <Col md={12} className="mb-3">
-        <Card className="mb-4 shadow-sm border-0">
+        <Card className="mb-4 shadow-sm border-1">
           {/* Card Header */}
           <Card.Header as="h5" className="text-center bg-primary text-white">
             Previous Appointment
@@ -91,7 +91,7 @@ function PrevoiusStaffAppointCard({
                 >
                   {review.rating}
                 </span>
-                <div className="mt-2">
+               {review.comment && (<div className="mt-2">
                   <span className="text-secondary" style={{ fontSize: "1rem" }}>
                     Client Comment:
                   </span>
@@ -101,7 +101,7 @@ function PrevoiusStaffAppointCard({
                   >
                     {review.comment}
                   </span>
-                </div>
+                </div>)}
                 {review.staffResponse && (
                   <div className="mt-2">
                     <span className="text-secondary" style={{ fontSize: "1rem" }}>
@@ -119,7 +119,7 @@ function PrevoiusStaffAppointCard({
             )}
 
             {/* Action Buttons */}
-            {!review && (
+            {review && !review.isStaffResponded && (
               <div className="d-flex justify-content-end gap-2 mt-4 flex-wrap">
                 <Button
                   variant="primary"
@@ -139,4 +139,4 @@ function PrevoiusStaffAppointCard({
   );
 }
 
-export default PrevoiusStaffAppointCard;
+export default PreviousStaffAppointCard;

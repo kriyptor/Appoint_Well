@@ -30,25 +30,11 @@ function AuthInterface() {
     e.preventDefault();
     
     if (isSignUp) {
-      const success = await signup(name, email, password, phoneNumber);
-      if (success) {
-        navigate('/dashboard');
-      }
+      await signup(name, email, password, phoneNumber);
     } else {
-      const success = await login(email, password, role);
-      if (success) {
-        switch(role) {
-          case 'admin':
-            navigate('/admin-dashboard');
-            break;
-          case 'staff':
-            navigate('/staff-dashboard');
-            break;
-          default:
-            navigate('/user-dashboard');
-        }
-      }
+      await login(email, password, role);
     }
+    // Remove navigation logic from here
   };
 
   return (

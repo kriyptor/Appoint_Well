@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 function Navigation() {
   const { currentUser, logout, hasRole, setModalShow } = useAuth();
-  const homeNav = `${currentUser?.role}-dashboard`;
+  const homeNav = `${currentUser?.role}`;
   const navigate = useNavigate();
   
   const handleLogout = () => {
@@ -68,11 +68,8 @@ function Navigation() {
                   <Nav.Link as={Link} to="/staff/">
                     Upcoming Appointments
                   </Nav.Link>
-                  <Nav.Link as={Link} to="/staff/previous">
+                  <Nav.Link as={Link} to="/staff/appointment/previous">
                     Previous Appointments
-                  </Nav.Link>
-                  <Nav.Link as={Link} to="/staff/cancelled">
-                    Canceled Appointments
                   </Nav.Link>
                   </>
                 )}
@@ -83,6 +80,17 @@ function Navigation() {
                     <Nav.Link as={Link} to="/admin/profile">
                       Profile
                     </Nav.Link>
+                    <NavDropdown title="Appointments" id="basic-nav-dropdown">
+                        <NavDropdown.Item as={Link} to="/admin/appointment/upcoming">
+                          Upcoming Appointments
+                        </NavDropdown.Item>
+                        <NavDropdown.Item as={Link} to="/admin/appointment/previous">
+                          Previous Appointments
+                        </NavDropdown.Item>
+                        <NavDropdown.Item as={Link} to="/admin/appointment/cancelled">
+                          Canceled Appointments
+                        </NavDropdown.Item>
+                      </NavDropdown>
                     <Nav.Link as={Link} to="/admin">
                       Manage Services
                     </Nav.Link>

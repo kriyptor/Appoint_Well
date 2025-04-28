@@ -15,6 +15,9 @@ const predefinedUsers = [
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  // Add redirect path state
+  const [redirectPath, setRedirectPath] = useState(null);
+  
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [currentUser, setCurrentUser] = useState(null);
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
@@ -90,6 +93,18 @@ export const AuthProvider = ({ children }) => {
       const token = response.data.token;
       setAuthToken(token);
       localStorage.setItem('authToken', token);
+      
+      // Set redirect path based on role
+      switch(role) {
+        case 'admin':
+          setRedirectPath('/admin/');
+          break;
+        case 'staff':
+          setRedirectPath('/staff/');
+          break;
+        default:
+          setRedirectPath('/user/');
+      }
       return true;
     } catch (error) {
       setAuthError(error.response?.data?.message || 'Login failed');
@@ -135,6 +150,7 @@ export const AuthProvider = ({ children }) => {
     return currentUser.role === roles;
   };
 
+  // Add redirectPath to context value
   const value = {
     currentUser,
     login,
@@ -149,7 +165,9 @@ export const AuthProvider = ({ children }) => {
     walletBalance,
     setWalletBalance,
     appointments,
-    setAppointments
+    setAppointments,
+    redirectPath,
+    setRedirectPath,
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
