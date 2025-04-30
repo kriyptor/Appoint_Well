@@ -1,8 +1,9 @@
 import React from "react";
-import { Container, Row, Col, Spinner, Alert } from "react-bootstrap";
-import { useEffect, useState } from "react";
-import { useAuth } from '../../context/AuthContext';
 import axios from "axios";
+import { useAuth } from '../../context/AuthContext';
+import { useEffect, useState } from "react";
+import PaginationComponent from "./PaginationComponent";
+import { Container, Row, Col, Spinner, Alert } from "react-bootstrap";
 import UpcomingAllAppointmentCard from "./UpcomingAllAppointmentCard";
 
 
@@ -12,29 +13,42 @@ function UpcomingAllAppointment() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [appointments, setAppointments] = useState([]);
+    const [paginationInfo, setPaginationInfo] = useState({
+        currentPage: 1,
+        itemsPerPage: 5,
+        totalItems: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
 
-
-useEffect(() => {  
-  const fetchUpcomingAppointments = async () => {
-    setLoading(true);
-    try {
-        const response = await axios.get(`${BASE_URL}/appointment/admin/upcoming`, {
-            headers: { Authorization: authToken }
-        });
-        if (response.data && response.data.data) {
-            setAppointments(response.data.data);
-            console.log('Fetched upcoming appointments:', response.data.data);
-        } else {
-            setError("No appointment data received");
+    const fetchUpcomingAppointments = async ( page = 1 ) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${BASE_URL}/appointment/admin/upcoming`, {
+                headers: { Authorization: authToken },
+                params: { page }
+            });
+            if (response.data && response.data.data) {
+                setAppointments(response.data.data);
+                setPaginationInfo(response.data.pagination);
+                console.log('Fetched upcoming appointments:', response.data.data);
+            } else {
+                setError("No appointment data received");
+            }
+            setLoading(false);
+        } catch (error) {
+          console.error('Error fetching upcoming appointments:', error);
         }
-        setLoading(false);
-    } catch (error) {
-      console.error('Error fetching upcoming appointments:', error);
-    }
-  };
+      };
 
-  fetchUpcomingAppointments();
-}, [BASE_URL, authToken]);
+    useEffect(() => {  
+    fetchUpcomingAppointments();
+    }, [BASE_URL, authToken]);
+
+    const handlePageChange = (page) => {
+        fetchUpcomingAppointments(page);
+      };
 
   return (
 <>
@@ -71,6 +85,15 @@ useEffect(() => {
             />
             ))
         )}
+        </Col>
+        </Row>
+        <Row className="justify-content-center mt-3">
+        <Col xs="auto">
+          <PaginationComponent
+            paginationInfo={paginationInfo}
+            loading={loading}
+            handlePageChange={handlePageChange}
+          />
         </Col>
       </Row>
     </Container>

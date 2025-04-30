@@ -77,7 +77,7 @@ function UpcomingAllAppointmentCard({
                     Booked By Client:
                   </div>
                   <div
-                    className="fw-semibold text-dark"
+                    className="fw-semibold text-primary"
                     style={{ fontSize: "1.05rem" }}
                   >
                     {userName}
@@ -103,7 +103,7 @@ function UpcomingAllAppointmentCard({
                     Staff Assigned:
                   </div>
                   <div
-                    className="fw-semibold text-dark"
+                    className="fw-semibold text-danger"
                     style={{ fontSize: "1.05rem" }}
                   >
                     {staffName}

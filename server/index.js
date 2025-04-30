@@ -20,6 +20,7 @@ const reviewRouter = require(`./Routes/review-router`);
 const serviceRouter = require(`./Routes/service-router`);
 const paymentRouter = require(`./Routes/payment-router`);
 const appointmentRouter = require(`./Routes/appointment-router`);
+const { sendMail } = require('./Utils/mail-service');
 
 
 require('dotenv').config();
@@ -107,6 +108,14 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
   })
 }
 createData() */
+
+/* sendMail(`raajaag14@gmail.com`, 'Test Subject', 'Test Appointment Status', 'Confirmed')
+  .then((response) => {
+    console.log('Email sent successfully:', response);
+  })
+  .catch((error) => {
+    console.error('Error sending email:', error);
+  }); */
 
 /* -------Sync the database------- */
 

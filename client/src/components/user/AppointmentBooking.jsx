@@ -19,6 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import setHours from 'date-fns/setHours';
 import setMinutes from 'date-fns/setMinutes';
 import { addDays, isSameDay, addHours, format, isAfter, startOfDay } from 'date-fns';
+import { load } from '@cashfreepayments/cashfree-js';
 
 // Custom style to fix z-index
 const customDatePickerStyle = `
@@ -40,6 +41,9 @@ const AppointmentBooking = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [radioValue, setRadioValue] = useState('upi');
+  const [orderId, setOrderId] = useState('');
+  const [cashfree, setCashfree] = useState(null);
+
 
   const paymentOptions = [
     { name: 'UPI', value: 'upi', variant: 'outline-success' },
@@ -99,6 +103,14 @@ const AppointmentBooking = () => {
     setSelectedTime(null);
   };
 
+  // Load Cashfree SDK
+  const initializeSDK = async () => {
+    const cashfreeInstance = await load({
+      mode: "sandbox",
+    });
+    setCashfree(cashfreeInstance);
+  };
+
   // Fetch available services
   useEffect(() => {
     const fetchServices = async () => {
@@ -116,11 +128,94 @@ const AppointmentBooking = () => {
       }
     };
     fetchServices();
+    initializeSDK();
   }, [BASE_URL, authToken]);
 
+
+  /* ------Payments--------- */
+  const getSessionId = async () => {
+    try {
+      
+      const res = await axios.post(`${BASE_URL}/payment/user/create-session`, 
+        { amount: selectedService.price },
+        { headers: { Authorization: authToken } }
+      );
+
+      if (res.data && res.data.result.payment_session_id && res.data.result.order_id) {
+        // Return both sessionId and orderId
+        return {
+          sessionId: res.data.result.payment_session_id,
+          orderId: res.data.result.order_id
+        };
+      } else {
+        console.warn("getSessionId: Missing payment_session_id or order_id in response");
+        return null; // Or throw an error
+      }
+    } catch (error) {
+      console.error("getSessionId error:", error);
+      return null; // Or throw an error
+    }
+  };
+
+  const handlePayment = async () => {
+
+    try {
+      //setLoading(true);
+      const sessionData = await getSessionId();
+
+      if (!sessionData) {
+        console.error("handlePayment: Could not get session data");
+        alert("Could not initiate payment. Please try again.");
+        return;
+      }
+
+      const { sessionId, orderId } = sessionData;
+      setOrderId(orderId); // Update the state here
+
+      console.log("handlePayment: sessionId =", sessionId, "orderId =", orderId);
+
+      const checkoutOptions = {
+        paymentSessionId: sessionId,
+        redirectTarget: "_modal",
+      };
+
+      cashfree.checkout(checkoutOptions).then((result) => {
+        if(result.error){
+          console.log("User closed the popup or payment error:", result.error);
+        }
+        if(result.redirect){
+          console.log("Payment will be redirected");
+        }
+        if(result.paymentDetails){
+          console.log("Payment completed, checking status");
+          console.log("Payment details:", result.paymentDetails);
+          console.log('orderId being sent for verification:', orderId);
+
+          axios.post(`${BASE_URL}/payment/user/verify`, 
+            { orderId },
+            { headers: { Authorization: authToken } }
+          ).then((res) => {
+              console.log("Verification response:", res);
+             
+              if (res.status === 200 && res.data.success) {
+                handleCreateAppointment();
+              }
+            })
+            .catch((err) => {
+              console.error("Verification error:", err);
+            });
+        }
+      });
+    } catch (error) {
+      console.error("handlePayment error:", error);
+      alert("Payment failed. Please try again.");
+    }
+  };
+
+
   // Create appointment
-  const handleCreateAppointment = async (e) => {
-    e.preventDefault();
+  const handleCreateAppointment = async () => {
+
     if (!selectedService || !selectedDate || !selectedTime) {
       setError('Please fill in all fields');
       return;
@@ -128,10 +223,10 @@ const AppointmentBooking = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+
     try {
       const formattedTime = selectedTime.toTimeString().split(' ')[0];
-      const res = await axios.post(
-        `${BASE_URL}/appointment/create`,
+      const res = await axios.post(`${BASE_URL}/appointment/create`,
         {
           serviceId: selectedService.id,
           date: selectedDate,
@@ -156,6 +251,15 @@ const AppointmentBooking = () => {
     }
   };
 
+  const handleAppointmentBooking = () => {
+    if (radioValue === 'upi') {
+      handlePayment();
+    } else {
+      handleCreateAppointment();
+    }
+  };
+
+
   return (
     <Container className="py-5">
       <style>{customDatePickerStyle}</style>
@@ -169,8 +273,16 @@ const AppointmentBooking = () => {
             <p className="text-muted">Select your service and time</p>
           </div>
 
-          {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
-          {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
+          {error && (
+            <Alert variant="danger" onClose={() => setError("")} dismissible>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert variant="success" onClose={() => setSuccess("")} dismissible>
+              {success}
+            </Alert>
+          )}
 
           {fetchLoading ? (
             <div className="text-center py-5">
@@ -178,21 +290,25 @@ const AppointmentBooking = () => {
               <p className="mt-3">Loading services...</p>
             </div>
           ) : (
-            <Form onSubmit={handleCreateAppointment}>
+            <Form>
               {/* Service Selection */}
               <Form.Group className="mb-4">
                 <Form.Label className="fw-bold">Service</Form.Label>
                 <Form.Select
-                  value={selectedService?.id || ''}
+                  value={selectedService?.id || ""}
                   onChange={(e) => {
-                    const svc = fetchedServicesData.find(s => s.id === e.target.value);
+                    const svc = fetchedServicesData.find(
+                      (s) => s.id === e.target.value
+                    );
                     setSelectedService(svc || null);
                   }}
                   required
                 >
                   <option value="">Choose...</option>
-                  {fetchedServicesData.map(s => (
-                    <option key={s.id} value={s.id}>{s.title} - ${s.price}</option>
+                  {fetchedServicesData.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title} - ₹{s.price}
+                    </option>
                   ))}
                 </Form.Select>
               </Form.Group>
@@ -207,7 +323,9 @@ const AppointmentBooking = () => {
                       onChange={handleDateChange}
                       minDate={new Date()}
                       maxDate={addDays(new Date(), 30)}
-                      dayClassName={(d) => (d.getDay() % 6 === 0 ? 'weekend-day' : undefined)}
+                      dayClassName={(d) =>
+                        d.getDay() % 6 === 0 ? "weekend-day" : undefined
+                      }
                       className="form-control py-2"
                       placeholderText="Pick a date"
                       dateFormat="dd-MM-yyyy"
@@ -216,7 +334,7 @@ const AppointmentBooking = () => {
                     />
                   </Form.Group>
                 </Col>
-                <Col >
+                <Col>
                   <Form.Group>
                     <Form.Label className="fw-bold">Time</Form.Label>
                     <DatePicker
@@ -225,8 +343,16 @@ const AppointmentBooking = () => {
                       showTimeSelect
                       showTimeSelectOnly
                       timeIntervals={30}
-                      minTime={selectedDate ? getMinTime(selectedDate) : setHours(setMinutes(new Date(), 0), 9)}
-                      maxTime={selectedDate ? getMaxTime(selectedDate) : setHours(setMinutes(new Date(), 0), 19)}
+                      minTime={
+                        selectedDate
+                          ? getMinTime(selectedDate)
+                          : setHours(setMinutes(new Date(), 0), 9)
+                      }
+                      maxTime={
+                        selectedDate
+                          ? getMaxTime(selectedDate)
+                          : setHours(setMinutes(new Date(), 0), 19)
+                      }
                       dateFormat="h:mm aa"
                       timeCaption="Time"
                       className="form-control py-2"
@@ -237,11 +363,12 @@ const AppointmentBooking = () => {
                     />
                     {selectedDate && (
                       <Form.Text className="text-muted">
-                        {isSameDay(new Date(selectedDate), new Date()) ? (
-                          `Available: ${format(addHours(new Date(), 1), 'h:mm aa')} - 7:00 PM`
-                        ) : (
-                          'Available: 9:00 AM - 7:00 PM'
-                        )}
+                        {isSameDay(new Date(selectedDate), new Date())
+                          ? `Available: ${format(
+                              addHours(new Date(), 1),
+                              "h:mm aa"
+                            )} - 7:00 PM`
+                          : "Available: 9:00 AM - 7:00 PM"}
                       </Form.Text>
                     )}
                   </Form.Group>
@@ -272,16 +399,29 @@ const AppointmentBooking = () => {
               {/* Summary & Confirm */}
               {selectedService && selectedDate && selectedTime && (
                 <Card className="mb-4 border-success">
-                  <Card.Header className="bg-success text-white">Summary</Card.Header>
+                  <Card.Header className="bg-success text-white">
+                    Summary
+                  </Card.Header>
                   <Card.Body>
                     <Row>
                       <Col sm={6}>
-                        <p><strong>Service:</strong> {selectedService.title}</p>
-                        <p><strong>Date:</strong> {new Date(selectedDate).toLocaleDateString()}</p>
+                        <p>
+                          <strong>Service:</strong> {selectedService.title}
+                        </p>
+                        <p>
+                          <strong>Date:</strong>{" "}
+                          {new Date(selectedDate).toLocaleDateString()}
+                        </p>
                       </Col>
                       <Col sm={6} className="text-sm-end">
-                        <p><strong>Time:</strong> {format(selectedTime, 'h:mm aa')}</p>
-                        <p><strong>Payment:</strong> {radioValue.toUpperCase()} <Badge bg="success">Ready</Badge></p>
+                        <p>
+                          <strong>Time:</strong>{" "}
+                          {format(selectedTime, "h:mm aa")}
+                        </p>
+                        <p>
+                          <strong>Payment:</strong> {radioValue.toUpperCase()}{" "}
+                          <Badge bg="success">Ready</Badge>
+                        </p>
                       </Col>
                     </Row>
                   </Card.Body>
@@ -289,8 +429,25 @@ const AppointmentBooking = () => {
               )}
 
               <div className="text-center">
-                <Button size="lg" className="px-5" type="submit" disabled={!selectedService || !selectedDate || !selectedTime || loading}>
-                  {loading ? (<><Spinner size="sm" className="me-2" />Processing...</>) : 'Confirm Booking'}
+                <Button
+                  size="lg"
+                  className="px-5"
+                  onClick={handleAppointmentBooking}
+                  disabled={
+                    !selectedService ||
+                    !selectedDate ||
+                    !selectedTime ||
+                    loading
+                  }
+                >
+                  {loading ? (
+                    <>
+                      <Spinner size="sm" className="me-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Confirm Booking"
+                  )}
                 </Button>
               </div>
             </Form>

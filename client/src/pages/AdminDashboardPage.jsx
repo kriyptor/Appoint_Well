@@ -1,11 +1,13 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ServiceManagement from '../components/admin/ServiceManagement';
+import AdminProfile from '../components/admin/AdminProfile';
 import StaffManagement from '../components/admin/StaffManagement';
 import RevenueAnalytics from '../components/admin/RevenueAnalytics';
-import AdminProfile from '../components/admin/AdminProfile';
+import ServiceManagement from '../components/admin/ServiceManagement';
 import UpcomingAllAppointment from '../components/admin/UpcomingAllAppointment';
+import CanceledAllAppointments from '../components/admin/CanceledAllAppointments';
+import PreviousAllAppointments from '../components/admin/PreviousAllAppointments';
 
 
 function AdminDashboard() {
@@ -18,8 +20,8 @@ function AdminDashboard() {
         <Route path="/staff" element={<StaffManagement />} />
         <Route path="/revenue" element={<RevenueAnalytics />} />
         <Route path="/appointment/upcoming" element={<UpcomingAllAppointment />} />
-        <Route path="/appointment/previous" element={<UpcomingAllAppointment />} />
-        <Route path="/appointment/cancelled" element={<UpcomingAllAppointment />} />
+        <Route path="/appointment/previous" element={<PreviousAllAppointments/>} />
+        <Route path="/appointment/cancelled" element={<CanceledAllAppointments/>} />
       </Routes>
   );
 }

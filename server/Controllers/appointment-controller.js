@@ -6,6 +6,7 @@ const StaffService = require(`../Models/staff-service-model`);
 const Staffs = require(`../Models/staffs-model`);
 const Reviews = require('../Models/reviews-model');
 const { timeDifferenceValidation, convertDateFormat } = require(`../Utils/utility-functions`);
+const { sendMail } = require(`../Utils/mail-service`);
 const db = require(`../Utils/database`);
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
@@ -117,6 +118,11 @@ exports.userCreateAppointment = async (req, res) => {
             [`totalRevenue`, `${category}ServiceRevenue`],
             { by: price, where: { id: 1 }, transaction }
         );
+
+        const { userName, userEmailId } = req.user;
+        const emailSubject = `Appointment has been scheduled`;
+        
+        const result = await sendMail(userName, userEmailId, emailSubject, 'scheduled', newAppointmentData);
 
         await transaction.commit();
 
@@ -496,10 +502,10 @@ exports.getAllUpcomingAppointments = async (req, res) => {
             message: 'All the appointments',
             data: formatedAppointmentData,
             pagination : {
-                totalItems : count,
-                totalPages : totalPages,
                 currentPage : page,
                 itemsPerPage : limit,
+                totalItems : count,
+                totalPages : totalPages,
                 hasNextPage : hasNextPage,
                 hasPrevPage : hasPreviousPage
             }
@@ -518,7 +524,11 @@ exports.getAllUpcomingAppointments = async (req, res) => {
 exports.getAllPreviousAppointments = async (req, res) => {
     try {
 
-        const allAppointment = await Appointments.findAll({
+        const page = parseInt(req.query.page || 1);
+        const limit = parseInt(req.query.limit || 5);
+        const offset = (page - 1) * limit;
+
+        const { count, rows: allAppointment } = await Appointments.findAndCountAll({
             /* where: { [Op.or] : { date: { [Op.lt]: currentDate }, status : 'completed' } }, */
             where: { status : 'completed' },
             include:[
@@ -534,8 +544,14 @@ exports.getAllPreviousAppointments = async (req, res) => {
                     model: Reviews
                 }
             ],
+            limit: limit,
+            offset: offset,
             order : [['date', 'DESC']]
         });
+
+        const totalPages = Math.ceil(count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPreviousPage = page > 1;
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
@@ -566,7 +582,15 @@ exports.getAllPreviousAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: formatedAppointmentData
+            data: formatedAppointmentData,
+            pagination : {
+                currentPage : page,
+                itemsPerPage : limit,
+                totalItems : count,
+                totalPages : totalPages,
+                hasNextPage : hasNextPage,
+                hasPrevPage : hasPreviousPage
+            }
         });
         
     } catch (error) {
@@ -583,7 +607,11 @@ exports.getAllPreviousAppointments = async (req, res) => {
 exports.getAllCanceledAppointments = async (req, res) => {
     try {
 
-        const allAppointment = await Appointments.findAll({
+        const page = parseInt(req.query.page || 1);
+        const limit = parseInt(req.query.limit || 5);
+        const offset = (page - 1) * limit;
+
+        const { count, rows: allAppointment } = await Appointments.findAndCountAll({
           where: { status: 'canceled' },
           include:[
             {
@@ -595,8 +623,14 @@ exports.getAllCanceledAppointments = async (req, res) => {
                 attributes: ['name', 'profilePicture'],
             }
         ],
+            limit: limit,
+            offset: offset,
           order : [['date']]
         });
+
+        const totalPages = Math.ceil(count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPreviousPage = page > 1;
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
@@ -620,7 +654,15 @@ exports.getAllCanceledAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the upcoming appointments',
-            data: formatedAppointmentData
+            data: formatedAppointmentData,
+            pagination : {
+                currentPage : page,
+                itemsPerPage : limit,
+                totalItems : count,
+                totalPages : totalPages,
+                hasNextPage : hasNextPage,
+                hasPrevPage : hasPreviousPage
+            }
         });
         
     } catch (error) {
