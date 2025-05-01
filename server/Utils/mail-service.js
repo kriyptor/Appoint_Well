@@ -49,7 +49,44 @@ exports.sendMail = async (
             html: `
                 <p>Hi ${senderName || 'There'},</p>
                 <p>Your appointment status is: <strong>${appointmentStatus || 'Updated'}</strong></p>
+
+                ${appointmentStatus.toLowerCase() === 'cancelled' ? 
+                        (appointmentData.refundStatus ? 
+                            `<div style="margin: 15px 0; padding: 12px; border: 2px solid #28a745; border-radius: 4px; background-color: #f8f9fa; color: #155724;">
+                                <h5 style="margin: 0;">
+                                    Your appointment has been cancelled successfully and we have 
+                                    <strong>refunded the amount: ₹${price}</strong>
+                                </h5>
+                            </div>` : 
+                            `<div style="margin: 15px 0; padding: 12px; border: 2px solid #dc3545; border-radius: 4px; background-color: #f8f9fa; color: #721c24;">
+                                <h5 style="margin: 0;">
+                                    Your appointment has been cancelled successfully. 
+                                    However, according to our policy, we are unable to process a refund.
+                                </h5>
+                            </div>`
+                        )
+                     : ``
+                }
+
+                ${appointmentStatus.toLowerCase() === 'rescheduled' ? 
+                    `<div style="
+                        margin: 15px 0;
+                        padding: 12px;
+                        border: 2px solid #28a745;
+                        border-radius: 4px;
+                        background-color: #f8f9fa;
+                        color: #155724;
+                    ">
+                        <h5 style="margin: 0;">
+                            Your appointment has been rescheduled successfully, Your new appointment details are:
+                            <strong>Appointment Date: ${date}</strong><br/>
+                            <strong>Appointment Time: ${startTime}</strong><br/>
+                        </h5>
+                    </div>` : ``
+                }
+
                 <hr/>
+                <p>Here are the details of your appointment:</p>
                 <table border="1" style="border-collapse: collapse; width: 100%;">
                     <thead>
                         <tr>
@@ -72,7 +109,7 @@ exports.sendMail = async (
                         </tr>
                         <tr>
                             <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">Price Paid</td>
-                            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${price}</td>
+                            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">₹${price}</td>
                         </tr>
                     </tbody>
                 </table>

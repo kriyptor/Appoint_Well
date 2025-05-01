@@ -121,7 +121,7 @@ exports.userCreateAppointment = async (req, res) => {
 
         const { name, email } = req.user;
         
-        // Format appointment data for email
+        /* // Format appointment data for email
         const emailAppointmentData = {
             serviceName: service.title,
             date: formattedDate,
@@ -129,7 +129,7 @@ exports.userCreateAppointment = async (req, res) => {
             staffName: selectedStaffName,
             price: `₹${price}`
         };
-
+ */
         // Validate email data
         if (!name || !email) {
             console.warn('Missing user email information:', { name, email });
@@ -142,7 +142,7 @@ exports.userCreateAppointment = async (req, res) => {
                     email,
                     emailSubject,
                     'scheduled',
-                    emailAppointmentData
+                    newAppointmentData
                 );
 
                 if (!result.success) {
@@ -157,7 +157,6 @@ exports.userCreateAppointment = async (req, res) => {
             }
         }
 
-        // Continue with your existing code...
         await transaction.commit();
 
         return res.status(201).json({ 
@@ -176,6 +175,226 @@ exports.userCreateAppointment = async (req, res) => {
         });
     }
 }
+
+
+
+exports.userRescheduleAppointment = async (req, res) => {
+    try {
+
+        const appointmentId = req.params.id;
+
+        const { date, startTime } = req.body;
+
+        if (!appointmentId || !date || !startTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        };
+
+        const appointment = await Appointments.findByPk(appointmentId);
+
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Appointment Found'
+            });
+        }
+
+        if (['rescheduled','canceled', 'unattained', 'completed'].includes(appointment.status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Appointment is ${appointment.status} and cannot be canceled`
+            });
+        }
+
+          //TODO: Add rescheduled mail service
+
+
+          if(!timeDifferenceValidation(appointment.date, appointment.startTime)){
+            return res.status(400).json({
+                success: false,
+                message: 'Appointment cannot be rescheduled at this point',
+            });
+          }
+
+        appointment.status = 'rescheduled';
+        appointment.date = convertDateFormat(date);
+        appointment.startTime = startTime;
+        await appointment.save();
+
+        const { name, email } = req.user;
+
+        const emailRescheduledAppointmentData = {
+            serviceName: appointment.serviceName,
+            date: date,
+            startTime: startTime,
+            staffName: appointment.staffName,
+            price: appointment.price,
+        };
+
+        if (!name || !email) {
+            console.warn('Missing user email information:', { name, email });
+        }
+        else {
+            try {
+                const emailSubject = `Appointment Rescheduled - ${appointment.serviceName}`;
+               
+                const result = await sendMail(
+                    name,
+                    email,
+                    emailSubject,
+                    'rescheduled',
+                    emailRescheduledAppointmentData
+                );
+
+                if (!result.success) {
+                    console.error('Failed to send rescheduled email:', result.error);
+                } else {
+                    console.log('rescheduled email sent successfully:', result.messageId);
+                }
+            } catch (emailError) {
+                console.error('Error sending rescheduled email:', emailError);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Appointment rescheduled successfully',
+            data: appointment
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.userCancelAppointment = async (req, res) => {
+    const transaction = await db.transaction();
+    try {
+        const userId = req.user.id;
+        const appointmentId = req.params.id;
+
+        if(!appointmentId){
+            return res.status(400).json({
+                success: false,
+                message: 'No Appointment-Id found'
+            });
+        }
+
+        const appointment = await Appointments.findOne({
+            where: {
+                id: appointmentId,
+                userId: userId 
+            },
+            transaction
+        });
+
+        if (!appointment) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                message: `No Appointment Found with id: ${appointmentId}`
+            });
+        }
+
+        // Expanded status validation
+       if (['canceled', 'unattained', 'completed'].includes(appointment.status)) {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: `Appointment is ${appointment.status} and cannot be canceled`
+            });
+        }
+        
+        
+        // Determine if refund is eligible
+        let refundStatus = "No Refund";
+    
+        if(timeDifferenceValidation(appointment.date, appointment.startTime)){
+            // Process refund
+            await Users.increment('walletBalance', {
+                by: appointment.price,
+                where: { id: userId },
+                transaction
+            });
+
+            const revenueData = await Revenue.findByPk(1, { transaction });
+            revenueData.totalRevenue -= appointment.price;
+            revenueData.totalRefunds += appointment.price;
+            await revenueData.save({ transaction });
+           
+            appointment.refundStatus = true;
+            await appointment.save({ transaction });
+            
+            refundStatus = "Refund Processed";
+        }
+
+        // Update appointment status
+        appointment.status = 'canceled';
+        await appointment.save({ transaction });
+
+        await transaction.commit();
+
+        // Send cancellation email
+        const { name, email } = req.user;
+
+        const emailCancelledAppointmentData = {
+            serviceName: appointment.serviceName,
+            date: appointment.date,
+            startTime: appointment.startTime,
+            staffName: appointment.staffName,
+            price: appointment.price,
+            refundStatus: appointment.refundStatus
+        };
+
+        if (!name || !email) {
+            console.warn('Missing user email information:', { name, email });
+        }
+        else {
+            try {
+                const emailSubject = `Appointment Cancellation - ${appointment.serviceName}`;
+                const result = await sendMail(
+                    name,
+                    email,
+                    emailSubject,
+                    'cancelled',
+                    emailCancelledAppointmentData
+                );
+
+                if (!result.success) {
+                    console.error('Failed to send cancellation email:', result.error);
+                } else {
+                    console.log('Cancellation email sent successfully:', result.messageId);
+                }
+            } catch (emailError) {
+                console.error('Error sending cancellation email:', emailError);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Appointment canceled successfully',
+            refundStatus: refundStatus,
+            data: appointment
+        });
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
 
 exports.getUpcomingUserAppointments = async (req, res) => {
     try {
@@ -332,151 +551,6 @@ exports.getPreviousUserAppointments = async (req, res) => {
     }
 }
 
-
-exports.userRescheduleAppointment = async (req, res) => {
-    try {
-
-        const appointmentId = req.params.id;
-
-        const { date, startTime } = req.body;
-
-        if (!appointmentId || !date || !startTime) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required'
-            });
-        };
-
-        const appointment = await Appointments.findByPk(appointmentId);
-
-        if (!appointment) {
-            return res.status(404).json({
-                success: false,
-                message: 'No Appointment Found'
-            });
-        }
-
-        if (['rescheduled','canceled', 'unattained', 'completed'].includes(appointment.status)) {
-            return res.status(400).json({
-                success: false,
-                message: `Appointment is ${appointment.status} and cannot be canceled`
-            });
-        }
-
-          //TODO: Add rescheduled mail service
-
-
-          if(!timeDifferenceValidation(appointment.date, appointment.startTime)){
-            return res.status(400).json({
-                success: false,
-                message: 'Appointment cannot be rescheduled at this point',
-            });
-          }
-
-        appointment.status = 'rescheduled';
-        appointment.date = convertDateFormat(date);
-        appointment.startTime = startTime;
-        await appointment.save();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Appointment rescheduled successfully',
-            data: appointment
-        });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-}
-
-//TODO: Add canceled mail service & time contraint
-exports.userCancelAppointment = async (req, res) => {
-    const transaction = await db.transaction();
-    try {
-        const userId = req.user.id;
-        const appointmentId = req.params.id;
-
-        if(!appointmentId){
-            return res.status(400).json({
-                success: false,
-                message: 'No Appointment-Id found'
-            });
-        }
-
-        const appointment = await Appointments.findOne({
-            where: {
-                id: appointmentId,
-                userId: userId 
-            },
-            transaction
-        });
-
-        if (!appointment) {
-            await transaction.rollback();
-            return res.status(404).json({
-                success: false,
-                message: `No Appointment Found with id: ${appointmentId}`
-            });
-        }
-
-        // Expanded status validation
-       if (['canceled', 'unattained', 'completed'].includes(appointment.status)) {
-            await transaction.rollback();
-            return res.status(400).json({
-                success: false,
-                message: `Appointment is ${appointment.status} and cannot be canceled`
-            });
-        }
-        
-        // Update appointment status
-        appointment.status = 'canceled';
-        await appointment.save({ transaction });
-        
-        // Determine if refund is eligible
-        let refundStatus = "No Refund";
-    
-        if(timeDifferenceValidation(appointment.date, appointment.startTime)){
-            // Process refund
-            await Users.increment('walletBalance', {
-                by: appointment.price,
-                where: { id: userId },
-                transaction
-            });
-
-            const revenueData = await Revenue.findByPk(1, { transaction });
-            revenueData.totalRevenue -= appointment.price;
-            revenueData.totalRefunds += appointment.price;
-            await revenueData.save({ transaction });
-            refundStatus = "Refund Processed";
-        }
-
-        appointment.refundStatus = true;
-        await appointment.save({ transaction });
-
-        await transaction.commit();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Appointment canceled successfully',
-            refundStatus: refundStatus,
-            data: appointment
-        });
-
-    } catch (error) {
-        await transaction.rollback();
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-}
 
 
 
