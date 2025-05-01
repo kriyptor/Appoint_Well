@@ -1,41 +1,51 @@
-const nodemailer = require(`nodemailer`);
+const nodemailer = require('nodemailer');
 require("dotenv").config();
-
-
-const transporter = nodemailer.createTransport({
-    service: process.env.NODE_MAILER_SERVICE,
-    auth: {
-        user: process.env.NODE_MAILER_USER, // Your Gmail email address
-        pass: process.env.NODE_MAILER_PASSWORD, // App Password (NOT your actual Gmail password)
-    },
-});
 
 exports.sendMail = async (
     senderName,
     senderEmailId,
     emailSubject,
     appointmentStatus,
-    appointmentData
+    appointmentData = {}  // Make appointmentData optional with default empty object
 ) => {
     try {
-        if (!senderEmailId || !emailSubject || !appointmentData) {
-             console.error("Email sending failed: Missing required data.");
-             return { success: false, message: "Missing required email data" };
+        // Validate environment variables
+        if (!process.env.NODE_MAILER_SERVICE || !process.env.NODE_MAILER_USER || !process.env.NODE_MAILER_PASSWORD) {
+            throw new Error("Missing email configuration in environment variables");
         }
 
+        // Validate required parameters
+        if (!senderEmailId || !emailSubject) {
+            throw new Error("Missing required email parameters");
+        }
 
-        // Use default values for appointment data in case properties are missing
-        const serviceName = appointmentData.serviceName || 'N/A';
-        const date = appointmentData.date || 'N/A';
-        const startTime = appointmentData.startTime || 'N/A';
-        const staffName = appointmentData.staffName || 'N/A';
-        const price = appointmentData.price || 'N/A';
+        // Create transporter with logging
+        console.log("Creating transporter with service:", process.env.NODE_MAILER_SERVICE);
+        const transporter = nodemailer.createTransport({
+            service: process.env.NODE_MAILER_SERVICE,
+            auth: {
+                user: process.env.NODE_MAILER_USER,
+                pass: process.env.NODE_MAILER_PASSWORD,
+            },
+        });
 
+        // Verify transporter connection
+        await transporter.verify();
+        console.log("Transporter verified successfully");
+
+        // Use default values for appointment data
+        const {
+            serviceName = 'N/A',
+            date = 'N/A',
+            startTime = 'N/A',
+            staffName = 'N/A',
+            price = 'N/A'
+        } = appointmentData;
 
         const mailOptions = {
-            from: process.env.NODE_MAILER_USER, // Sender address
-            to: senderEmailId, // Recipient address
-            subject: emailSubject, // Subject line
+            from: `"AppointWell" <${process.env.NODE_MAILER_USER}>`,
+            to: senderEmailId,
+            subject: emailSubject,
             html: `
                 <p>Hi ${senderName || 'There'},</p>
                 <p>Your appointment status is: <strong>${appointmentStatus || 'Updated'}</strong></p>
@@ -66,17 +76,17 @@ exports.sendMail = async (
                         </tr>
                     </tbody>
                 </table>
-                <p>Thank you!</p>
-            `, 
+                <p>Thank you for choosing AppointWell!</p>
+            `,
         };
 
+        console.log("Attempting to send email to:", senderEmailId);
         const info = await transporter.sendMail(mailOptions);
         console.log("Email sent successfully:", info.messageId);
-        // Return success status and messageId
         return { success: true, messageId: info.messageId };
 
     } catch (error) {
-        console.error("Error sending email:", error); // Log the error
+        console.error("Detailed error sending email:", error);
         return { success: false, error: error.message };
     }
 };

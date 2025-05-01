@@ -25,7 +25,7 @@ const { sendMail } = require('./Utils/mail-service');
 
 require('dotenv').config();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.JWT_SECRET_KEY || !process.env.API_URL) {
   console.error('Missing required environment variables');
@@ -109,13 +109,26 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 }
 createData() */
 
-/* sendMail(`raajaag14@gmail.com`, 'Test Subject', 'Test Appointment Status', 'Confirmed')
-  .then((response) => {
-    console.log('Email sent successfully:', response);
-  })
-  .catch((error) => {
-    console.error('Error sending email:', error);
-  }); */
+// Test email with proper parameters
+/* sendMail(
+    "Test User",
+    "raajaag14@gmail.com",
+    "Test Subject",
+    "Confirmed",
+    {
+        serviceName: "Test Service",
+        date: "2024-05-01",
+        startTime: "10:00 AM",
+        staffName: "Test Staff",
+        price: "₹500"
+    }
+)s
+.then(response => {
+    console.log('Email response:', response);
+})
+.catch(error => {
+    console.error('Email error:', error);
+}); */
 
 /* -------Sync the database------- */
 

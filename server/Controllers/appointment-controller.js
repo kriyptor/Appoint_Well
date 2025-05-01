@@ -119,11 +119,45 @@ exports.userCreateAppointment = async (req, res) => {
             { by: price, where: { id: 1 }, transaction }
         );
 
-        const { userName, userEmailId } = req.user;
-        const emailSubject = `Appointment has been scheduled`;
+        const { name, email } = req.user;
         
-        const result = await sendMail(userName, userEmailId, emailSubject, 'scheduled', newAppointmentData);
+        // Format appointment data for email
+        const emailAppointmentData = {
+            serviceName: service.title,
+            date: formattedDate,
+            startTime: startTime,
+            staffName: selectedStaffName,
+            price: `₹${price}`
+        };
 
+        // Validate email data
+        if (!name || !email) {
+            console.warn('Missing user email information:', { name, email });
+            // Continue with appointment creation but log the warning
+        } else {
+            try {
+                const emailSubject = `Appointment Confirmation - ${service.title}`;
+                const result = await sendMail(
+                    name,
+                    email,
+                    emailSubject,
+                    'scheduled',
+                    emailAppointmentData
+                );
+
+                if (!result.success) {
+                    console.error('Failed to send confirmation email:', result.error);
+                    // Don't throw error, just log it and continue
+                } else {
+                    console.log('Confirmation email sent successfully:', result.messageId);
+                }
+            } catch (emailError) {
+                console.error('Error sending confirmation email:', emailError);
+                // Don't throw error, allow appointment creation to continue
+            }
+        }
+
+        // Continue with your existing code...
         await transaction.commit();
 
         return res.status(201).json({ 
