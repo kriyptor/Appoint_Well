@@ -10,7 +10,7 @@ exports.timeDifferenceValidation = (date, time, differenceHour=24) => {
 
 exports.generatePassword = (name) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$';
-    let password = `${name}_Pass@`;
+    let password = `${name.toLowerCase()}_Pass@`;
     for (let i = 0; i < 10; i++) {
         password += chars.charAt(Math.floor(Math.random() * chars.length));
     }

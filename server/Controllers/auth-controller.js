@@ -6,6 +6,7 @@ const bcrypt = require(`bcrypt`);
 const jwt = require(`jsonwebtoken`);
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require(`sequelize`);
+const { comparePassword } = require("../Utils/encryption-Decryption");
 require('dotenv').config();
 
 
@@ -266,7 +267,7 @@ exports.loginStaff = async (req, res) => {
             });
         }
 
-        const staff = await Staff.findOne({ where: { email: email } });
+        const staff = await Staff.findOne({ where: { email: email } });       
 
         if (!staff) {
             return res.status(404).json({
@@ -275,9 +276,9 @@ exports.loginStaff = async (req, res) => {
             });
         }
         
-        //const isMatch = await bcrypt.compare(password, staff.password);
+        const isMatch = comparePassword(password.trim(), staff.password);
         
-        if (staff.password !== password) {
+        if (!isMatch) {
             return res.status(401).json({
                 success: false,
                 message: `Invalid credentials!`

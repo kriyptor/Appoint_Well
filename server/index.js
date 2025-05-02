@@ -23,6 +23,7 @@ const appointmentRouter = require(`./Routes/appointment-router`);
 const { sendMail } = require('./Utils/mail-service');
 
 
+
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
@@ -129,6 +130,9 @@ createData() */
 .catch(error => {
     console.error('Email error:', error);
 }); */
+
+
+
 
 /* -------Sync the database------- */
 

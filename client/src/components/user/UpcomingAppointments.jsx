@@ -38,11 +38,15 @@ function UpcomingAppointments() {
       await axios.patch(`${BASE_URL}/appointment/cancel/${id}`, {},
         { headers: { Authorization: authToken } }
       );
-      setAppointments(appointments.filter(appointment => appointment.id !== id));
+      handleCancelSuccess(id);
     } catch (error) {
       setError('Failed to cancel appointment. Please try again.');
       console.error('Error canceling appointment:', error);
     }
+  };
+
+  const handleCancelSuccess = (canceledId) => {
+    setAppointments(appointments.filter(appointment => appointment.id !== canceledId));
   };
 
 useEffect(() => {  
@@ -89,6 +93,7 @@ useEffect(() => {
             appointments.map((appointment) => (
             <UpcomingAppointCard
                 key={appointment.id}
+                id={appointment.id}
                 serviceName={appointment.serviceTitle}
                 appointmentDate={appointment.date}
                 appointmentTime={appointment.startTime}
@@ -97,7 +102,7 @@ useEffect(() => {
                 staffName={appointment.staffName}
                 staffImage={appointment.staffProfilePicture}
                 onReschedule={() => handleReschedule(appointment.id)}
-                onCancel={() => handleCancel(appointment.id)}
+                onCancelSuccess={handleCancelSuccess}
             />
             ))
         )}

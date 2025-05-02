@@ -93,6 +93,27 @@ const AppointmentBooking = () => {
     if (isSameDay(selDate, now) && isAfter(now, salonClosingTime)) {
       setError('Salon is closed today. Auto-selected tomorrow.');
       const tomorrow = addDays(now, 1);
+      // Fix: Use proper date formatting
+      setSelectedDate(format(tomorrow, 'yyyy-MM-dd'));
+      setSelectedTime(null);
+      return;
+    }
+
+    setError('');
+    // Fix: Use proper date formatting
+    setSelectedDate(format(selDate, 'yyyy-MM-dd'));
+    setSelectedTime(null);
+  };
+
+  /*
+  const handleDateChange = (date) => {
+    const now = new Date();
+    const selDate = new Date(date);
+    const salonClosingTime = setHours(setMinutes(selDate, 0), 19);
+
+    if (isSameDay(selDate, now) && isAfter(now, salonClosingTime)) {
+      setError('Salon is closed today. Auto-selected tomorrow.');
+      const tomorrow = addDays(now, 1);
       setSelectedDate(tomorrow.toISOString().split('T')[0]);
       setSelectedTime(null);
       return;
@@ -101,7 +122,8 @@ const AppointmentBooking = () => {
     setError('');
     setSelectedDate(selDate.toISOString().split('T')[0]);
     setSelectedTime(null);
-  };
+  }; 
+   */
 
   // Load Cashfree SDK
   const initializeSDK = async () => {

@@ -4,7 +4,7 @@ const Services = require(`../Models/services-model`);
 const Staff = require(`../Models/staffs-model`);
 const { generatePassword } = require(`../Utils/utility-functions`);
 const StaffService = require(`../Models/staff-service-model`);
-
+const { encrypt, decrypt } = require('../Utils/encryption-Decryption');
 
 exports.createStaff = async (req, res) => {
     const transaction = await db.transaction(); 
@@ -26,13 +26,15 @@ exports.createStaff = async (req, res) => {
         // Create staff with conditional profilePicture
         const staffId = uuidv4();
         const staffEmail = `${name}.staff@appointwell.com`;
-        const staffPassword = generatePassword(name); //TODO: send it over email and hash it then save 
+        const staffPassword = generatePassword(name); 
+        //Hashing the password before storing it
+        const encryptedPassword = encrypt(staffPassword);
 
         const staffData = {
             id: staffId,
             name : name,
             email : staffEmail,
-            password : staffPassword,
+            password : encryptedPassword,
             specializations : specializations
         };
         
@@ -218,3 +220,33 @@ exports.deleteStaff = async (req, res) => {
 };
 
 
+exports.getStaffPassword = async (req, res) => {
+    try {
+        const staffId = req.query.id;
+
+        const staff = await Staff.findByPk(staffId);
+       
+        if (!staff) {
+            return res.status(404).json({
+                success: false,
+                message: 'Staff not found',
+            });
+        }
+
+        // Decrypt the password before sending it
+        const decryptedPassword = decrypt(staff.password);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Staff password retrieved successfully',
+            data: { password: decryptedPassword },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message,
+        });
+    }
+};

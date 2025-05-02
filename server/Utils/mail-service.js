@@ -46,7 +46,7 @@ exports.sendMail = async (
             from: `"AppointWell" <${process.env.NODE_MAILER_USER}>`,
             to: senderEmailId,
             subject: emailSubject,
-            html: `
+            html: ` 
                 <p>Hi ${senderName || 'There'},</p>
                 <p>Your appointment status is: <strong>${appointmentStatus || 'Updated'}</strong></p>
 

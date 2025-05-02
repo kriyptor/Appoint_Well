@@ -112,10 +112,23 @@ function RescheduleModal({ show, setShowReschedule, selectedAppt, onRescheduleSu
 
       if (response.status === 200) {
         setSuccess("Appointment rescheduled successfully!");
+        
         if (onRescheduleSuccess) {
-          onRescheduleSuccess(response.data.data);
+          // Create a new object instead of mutating the prop
+          const updatedAppointment = {
+            ...selectedAppt,
+            startTime: formattedTime,
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            status: "rescheduled"
+          };
+          
+          onRescheduleSuccess(updatedAppointment);
         }
-        setTimeout(handleClose, 2000);
+      
+        // Increase timeout to ensure user sees the success message
+        setTimeout(handleClose, 900);
+      } else {
+        setError("Unexpected response from server");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to reschedule appointment");

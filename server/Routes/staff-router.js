@@ -7,7 +7,10 @@ const router = express.Router();
 
 router.get('/all-staff', authenticate(['admin']), staffController.getAllStaff);
 
+router.get('/staff-password', authenticate(['admin']), staffController.getStaffPassword);
+
 router.post('/create', authenticate(['admin']), staffController.createStaff);
+
 
 /* router.patch('/:id', authenticate(['admin']), staffController.updateStaff); */
 

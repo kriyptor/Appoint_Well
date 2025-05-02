@@ -1,8 +1,11 @@
-import React from "react";
-import { Card, Button, Badge, Row, Col } from "react-bootstrap";
+import React, { useState } from 'react';
+import { Card, Button, Badge, Row, Col, Spinner } from "react-bootstrap";
 import { format } from "date-fns";
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 function UpcomingAppointCard({
+  id,
   serviceName,
   appointmentDate,
   appointmentTime,
@@ -11,9 +14,33 @@ function UpcomingAppointCard({
   staffName,
   staffImage,
   onReschedule,
-  onCancel,
+  onCancelSuccess
 }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { authToken } = useAuth();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
   const formattedDate = format(new Date(appointmentDate), "MMM dd, yyyy");
+
+  const handleCancel = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await axios.patch(
+        `${BASE_URL}/appointment/cancel/${id}`,
+        {},
+        { headers: { Authorization: authToken } }
+      );
+      onCancelSuccess(id);
+    } catch (error) {
+      setError('Failed to cancel appointment');
+      console.error('Error canceling appointment:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Row className="align-items-center">
@@ -85,6 +112,7 @@ function UpcomingAppointCard({
             size="sm"
             onClick={onReschedule}
             className="px-4"
+            disabled={isLoading}
             style={{ borderRadius: 8, fontWeight: 500 }}
           >
             Reschedule
@@ -92,13 +120,26 @@ function UpcomingAppointCard({
           <Button
             variant="outline-danger"
             size="sm"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="px-4"
+            disabled={isLoading}
             style={{ borderRadius: 8, fontWeight: 500 }}
           >
-            Cancel
+            {isLoading ? (
+            <>
+              <Spinner size="sm" className="me-2" />
+              Canceling...
+            </>
+          ) : (
+            "Cancel"
+          )}
           </Button>
         </div>
+        {error && (
+        <div className="mt-2 text-danger small">
+          {error}
+        </div>
+      )}
       </Card.Body>
     </Card>
     </Col>
