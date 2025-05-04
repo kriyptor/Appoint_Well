@@ -23,6 +23,12 @@ const Users = db.define(`Users`, {
         allowNull: false
     },
 
+    phoneNumber : {
+        type : Sequelize.BIGINT,
+        allowNull : false,
+        defaultValue: 123456789
+    },
+
     profilePicture: {
         type: Sequelize.TEXT,
         allowNull: false,
@@ -32,7 +38,7 @@ const Users = db.define(`Users`, {
     walletBalance: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 0
+        defaultValue: 1000
     }
 
 });

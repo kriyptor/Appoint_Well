@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, Button, Row, Col, Table } from "react-bootstrap";
 
-function ServiceCard({ service, onDelete, onEdit }) {
+function ServiceCard({ service, onEdit }) {
   return (
     <Card className="mb-3 shadow-sm">
       <Row className="g-0 align-items-center">
@@ -47,7 +47,7 @@ function ServiceCard({ service, onDelete, onEdit }) {
               <Button variant="outline-warning" className="me-2" onClick={onEdit}>
                 Edit
               </Button>
-              <Button variant="outline-danger" onClick={onDelete}>Delete</Button>
+              {/* <Button variant="outline-danger" onClick={onDelete}>Delete</Button> */}
             </div>
           </Card.Body>
         </Col>

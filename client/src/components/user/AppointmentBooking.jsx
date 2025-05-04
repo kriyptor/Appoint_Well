@@ -18,7 +18,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../context/AuthContext';
 import setHours from 'date-fns/setHours';
 import setMinutes from 'date-fns/setMinutes';
-import { addDays, isSameDay, addHours, format, isAfter, startOfDay } from 'date-fns';
+import { addDays, isSameDay, addHours, format, isAfter, startOfDay, addMonths } from 'date-fns';
 import { load } from '@cashfreepayments/cashfree-js';
 
 // Custom style to fix z-index
@@ -30,7 +30,7 @@ const customDatePickerStyle = `
 
 const AppointmentBooking = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const { authToken, currentUser, walletBalance } = useAuth();
+  const { authToken, currentUser } = useAuth();
 
   const [fetchedServicesData, setFetchedServicesData] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
@@ -344,7 +344,7 @@ const AppointmentBooking = () => {
                       selected={selectedDate ? new Date(selectedDate) : null}
                       onChange={handleDateChange}
                       minDate={new Date()}
-                      maxDate={addDays(new Date(), 30)}
+                      maxDate={addMonths(new Date())}
                       dayClassName={(d) =>
                         d.getDay() % 6 === 0 ? "weekend-day" : undefined
                       }

@@ -11,6 +11,8 @@ router.get('/get-single-service/:id', authenticate(['admin','user']), serviceCon
 
 router.post('/create', authenticate(['admin']), serviceController.createService);
 
+router.post('/update', authenticate(['admin']), serviceController.updateService);
+
 router.delete('/delete/:id', authenticate(['admin']), serviceController.deleteService);
 
 module.exports = router;

@@ -116,35 +116,35 @@ const RevenueAnalytics = () => {
             <tbody>
               <tr>
                 <td>Total Revenue</td>
-                <td className="text-end">₹{revenue?.totalRevenue || 0}</td>
+                <td className="text-end">₹{revenue?.totalRevenue.toLocaleString() || 0}</td>
               </tr>
               <tr>
                 <td>Hair Service Revenue</td>
                 <td className="text-end">
-                  ₹{revenue?.hairServiceRevenue || 0}
+                  ₹{revenue?.hairServiceRevenue.toLocaleString() || 0}
                 </td>
               </tr>
               <tr>
                 <td>Nail Service Revenue</td>
                 <td className="text-end">
-                  ₹{revenue?.nailServiceRevenue || 0}
+                  ₹{revenue?.nailServiceRevenue.toLocaleString() || 0}
                 </td>
               </tr>
               <tr>
                 <td>Skin Service Revenue</td>
                 <td className="text-end">
-                  ₹{revenue?.skincareServiceRevenue || 0}
+                  ₹{revenue?.skincareServiceRevenue.toLocaleString() || 0}
                 </td>
               </tr>
               <tr>
                 <td>Make-Up Service Revenue</td>
                 <td className="text-end">
-                  ₹{revenue?.makeupServiceRevenue || 0}
+                  ₹{revenue?.makeupServiceRevenue.toLocaleString() || 0}
                 </td>
               </tr>
               <tr>
                 <td>Total Refunds</td>
-                <td className="text-end">₹{revenue?.totalRefunds || 0}</td>
+                <td className="text-end">₹{revenue?.totalRefunds.toLocaleString() || 0}</td>
               </tr>
             </tbody>
           </Table>

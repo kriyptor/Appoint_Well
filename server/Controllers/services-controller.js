@@ -145,7 +145,14 @@ exports.updateService = async (req, res) => {
 
         const existingService = await Services.findByPk(serviceId);
 
-        const updatedService = {
+        if (!existingService) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Service exists',
+            });
+        }
+
+        const updatedServicedData = {
             title: title,
             duration: duration,
             price: price,
@@ -154,10 +161,10 @@ exports.updateService = async (req, res) => {
         };
 
         if(serviceImage){
-            updatedService.serviceImage = serviceImage;
+            updatedServicedData.serviceImage = serviceImage;
         }
 
-        updatedService = await Services.update(updatedService, { where : { id: serviceId } })
+       const updatedService = await Services.update(updatedServicedData, { where : { id: serviceId } })
 
         return res.status(200).json({ 
             success: true,

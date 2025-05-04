@@ -106,7 +106,7 @@ const StaffManagement = () => {
     }
   };
 
-  const handleRemoveStaff = async (staffId) => {
+/*   const handleRemoveStaff = async (staffId) => {
     try {
       await axios.delete(`${BASE_URL}/staff/${staffId}`, {
         headers: { Authorization: authToken }
@@ -115,7 +115,7 @@ const StaffManagement = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Error removing staff member');
     }
-  };
+  }; */
 
   return (
     <Container className="py-4">

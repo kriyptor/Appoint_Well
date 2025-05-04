@@ -1,34 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
-function AdminProfileModal({ show, onHide, admin, onUpdate }) {
-  const [form, setForm] = useState(admin);
+function AdminProfileModal({ show, setShowModal, admin, setAdminData }) {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [form, setForm] = useState({});
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { authToken } = useAuth();
+
+  const handleClose = () => {
+    setShowModal(false);
+    setError('');
+    setSuccess('');
+    setPassword('');
+  };
 
   useEffect(() => {
-    setForm(admin);
+    setForm(admin || {});
+    setPassword('');
+    setError('');
+    setSuccess('');
   }, [admin, show]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate(form);
+  const handleUpdate = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { name, email, profilePicture } = form;
+      await axios.post(
+        `${BASE_URL}/auth/admin/update`,
+        { name, email, password, profilePicture },
+        { headers: { Authorization: authToken } }
+      );
+      setSuccess('Profile updated successfully!');
+      setAdminData({ ...form, password: undefined });
+      
+      // Delay the modal close to show success message
+      setTimeout(() => {
+        handleClose();
+      }, 900); 
+      
+    } catch (error) {
+      setError('Error updating user data. Please try again.');
+      console.error('Error updating user data:', error);
+    } finally {
+      setLoading(false);
+      setPassword('');
+    }
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
+    <Modal show={show} onHide={handleClose} centered>
       <Modal.Header closeButton>
         <Modal.Title>Edit Admin Profile</Modal.Title>
       </Modal.Header>
-      <Form onSubmit={handleSubmit}>
-        <Modal.Body>
+      <Modal.Body>
+        {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+        {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+        <Form>
           <Form.Group className="mb-3">
             <Form.Label>Name</Form.Label>
             <Form.Control
               name="name"
-              value={form.name}
+              value={form.name || ""}
               onChange={handleChange}
               required
             />
@@ -38,32 +84,53 @@ function AdminProfileModal({ show, onHide, admin, onUpdate }) {
             <Form.Control
               name="email"
               type="email"
-              value={form.email}
+              value={form.email || ""}
               onChange={handleChange}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Role</Form.Label>
-            <Form.Select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              disabled
-            >
-              <option value="admin">Admin</option>
-            </Form.Select>
+            <Form.Label>Password</Form.Label>
+            <Form.Control
+              name="password"
+              type="password"
+              placeholder="New Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>
-            Cancel
-          </Button>
-          <Button variant="primary" type="submit">
-            Update Admin Data
-          </Button>
-        </Modal.Footer>
-      </Form>
+          <Form.Group className="mb-3">
+            <Form.Label>Profile Picture</Form.Label>
+            <Form.Control
+              name="profilePicture"
+              type="text"
+              value={form.profilePicture || ""}
+              onChange={handleChange}
+            />
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleUpdate} disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+              />
+              <span className="ms-2">Updating...</span>
+            </>
+          ) : (
+            'Update'
+          )}
+        </Button>
+      </Modal.Footer>
     </Modal>
   );
 }

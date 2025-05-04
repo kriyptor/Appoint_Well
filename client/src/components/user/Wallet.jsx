@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Spinner, Modal } from 'react-bootstrap';
+import { Form, Button, Spinner, Modal, Badge } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
@@ -60,11 +60,15 @@ function Wallet() {
       </Modal.Header>
       <Modal.Body>
         <Modal.Title id="contained-modal-title-vcenter">
-          Balance: {loading ? <Spinner animation="border" /> : `₹${walletBalance}`}
-        </Modal.Title>{" "}
+          Balance: {/* {loading && <Spinner animation="border" /> : `₹${walletBalance}`} */}
+          {loading ? (
+            <Spinner animation="border" />
+          ) : (
+            <Badge bg="success">₹{walletBalance}</Badge>
+          )}
+        </Modal.Title>
       </Modal.Body>
       <Modal.Footer>
-        <Button /* onClick={} */ variant='success'>Add Money</Button>
         <Button onClick={refreshWalletBalance} variant='warning'>Refresh</Button>
         <Button onClick={() => setModalShow(false)} variant='danger'>Close</Button>
       </Modal.Footer>

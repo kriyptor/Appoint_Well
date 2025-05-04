@@ -16,11 +16,16 @@ router.post('/user/update', authenticate(['user']), authController.updateUserDat
 /* ------------Admin Auth Routes-------------- */
 router.post('/admin/sign-in', authController.loginAdmin);
 
+router.get('/admin/data', authenticate(['admin']), authController.getAdminData);
+
+router.post('/admin/update', authenticate(['admin']), authController.updateAdminData);
+
 
 /* ------------Staff Auth Routes-------------- */
 router.post('/staff/sign-in', authController.loginStaff);
 
 router.get('/staff/data', authenticate(['staff']), authController.getStaffData);
 
+router.post('/staff/update', authenticate(['staff']), authController.updateStaffData);
 
 module.exports = router;

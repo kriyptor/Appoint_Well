@@ -1,19 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, ButtonGroup, ToggleButton, Modal, Form, Spinner, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "../../context/AuthContext";
 import setHours from "date-fns/setHours";
 import setMinutes from "date-fns/setMinutes";
+import { load } from '@cashfreepayments/cashfree-js';
 import axios from "axios";
 import {
   addDays,
+  addMonths,
   isSameDay,
   addHours,
   format,
   isAfter,
   startOfDay,
 } from "date-fns";
+
+const customDatePickerStyle = `
+  .react-datepicker-popper {
+    z-index: 9999 !important;
+  }
+`;
 
 function AppointmentBookingModal({ show, setShow, selectedService }) {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -22,6 +30,8 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
   const [selectedTime, setSelectedTime] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [orderId, setOrderId] = useState('');
+  const [cashfree, setCashfree] = useState(null);
   const { authToken } = useAuth();
   const [radioValue, setRadioValue] = useState("upi");
 
@@ -37,6 +47,15 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
     setSelectedDate(null);
     setSelectedTime(null);
   };
+
+    // Load Cashfree SDK
+    const initializeSDK = async () => {
+      const cashfreeInstance = await load({
+        mode: "sandbox",
+      });
+      setCashfree(cashfreeInstance);
+    };
+  
 
   // Determine minimum selectable time
   const getMinTime = (date) => {
@@ -123,7 +142,101 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
     }
   };
 
+  useEffect(() => {
+    initializeSDK();
+  }, [BASE_URL, authToken]);
+
+  /* ------Payments--------- */
+  const getSessionId = async () => {
+    try {
+      
+      const res = await axios.post(`${BASE_URL}/payment/user/create-session`, 
+        { amount: selectedService.price },
+        { headers: { Authorization: authToken } }
+      );
+
+      if (res.data && res.data.result.payment_session_id && res.data.result.order_id) {
+        // Return both sessionId and orderId
+        return {
+          sessionId: res.data.result.payment_session_id,
+          orderId: res.data.result.order_id
+        };
+      } else {
+        console.warn("getSessionId: Missing payment_session_id or order_id in response");
+        return null; // Or throw an error
+      }
+    } catch (error) {
+      console.error("getSessionId error:", error);
+      return null; // Or throw an error
+    }
+  };
+
+    const handlePayment = async () => {
+  
+      try {
+        //setLoading(true);
+        const sessionData = await getSessionId();
+  
+        if (!sessionData) {
+          console.error("handlePayment: Could not get session data");
+          alert("Could not initiate payment. Please try again.");
+          return;
+        }
+  
+        const { sessionId, orderId } = sessionData;
+        setOrderId(orderId); // Update the state here
+  
+        console.log("handlePayment: sessionId =", sessionId, "orderId =", orderId);
+  
+        const checkoutOptions = {
+          paymentSessionId: sessionId,
+          redirectTarget: "_modal",
+        };
+  
+        cashfree.checkout(checkoutOptions).then((result) => {
+          if(result.error){
+            console.log("User closed the popup or payment error:", result.error);
+          }
+          if(result.redirect){
+            console.log("Payment will be redirected");
+          }
+          if(result.paymentDetails){
+            console.log("Payment completed, checking status");
+            console.log("Payment details:", result.paymentDetails);
+            console.log('orderId being sent for verification:', orderId);
+  
+            axios.post(`${BASE_URL}/payment/user/verify`, 
+              { orderId },
+              { headers: { Authorization: authToken } }
+            ).then((res) => {
+                console.log("Verification response:", res);
+               
+                if (res.status === 200 && res.data.success) {
+                  handleCreateAppointment();
+                }
+              })
+              .catch((err) => {
+                console.error("Verification error:", err);
+              });
+          }
+        });
+      } catch (error) {
+        console.error("handlePayment error:", error);
+        alert("Payment failed. Please try again.");
+      }
+    };
+
+    const handleAppointmentBooking = () => {
+      if (radioValue === 'upi') {
+        handlePayment();
+      } else {
+        handleCreateAppointment();
+      }
+    };
+
   return (
+    <>
+    <style>{customDatePickerStyle}</style>
     <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
         <Modal.Title>Book Appointment</Modal.Title>
@@ -157,7 +270,7 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
               selected={selectedDate}
               onChange={handleDateChange}
               minDate={new Date()}
-              maxDate={addDays(new Date(), 30)}
+              maxDate={addMonths(new Date())} // Now dates available are up to 3 months ahead
               className="form-control"
               placeholderText="Choose date"
               dateFormat="dd/MM/yyyy"
@@ -216,7 +329,7 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
         </Button>
         <Button
           variant="primary"
-          onClick={handleCreateAppointment}
+          onClick={handleAppointmentBooking}
           disabled={loading || !selectedDate || !selectedTime}
         >
           {loading ? (
@@ -230,6 +343,7 @@ function AppointmentBookingModal({ show, setShow, selectedService }) {
         </Button>
       </Modal.Footer>
     </Modal>
+    </>
   );
 }
 

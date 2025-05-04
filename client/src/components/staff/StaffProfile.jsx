@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
 import StaffProfileCard from './StaffProfileCard';
 import StaffProfileModal from './StaffProfileModal';
+import axios from 'axios';
 
 
 function StaffProfile() {
@@ -21,7 +21,6 @@ function StaffProfile() {
             Authorization: authToken,
           },
         });
-        console.log(response.data.data);
         setStaffData(response.data.data);
       } catch (error) {
         console.error('Error fetching user data:', error);

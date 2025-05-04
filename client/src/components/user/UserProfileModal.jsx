@@ -50,7 +50,7 @@ function UserProfileModal({ show, setShowModal, user, setUserData }) {
       // Delay the modal close to show success message
       setTimeout(() => {
         handleClose();
-      }, 1500); // Shows success for 1.5 seconds
+      }, 900); 
       
     } catch (error) {
       setError('Error updating user data. Please try again.');

@@ -10,7 +10,6 @@ function StaffMemberCard({ staff, onRemove }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth();
-  //const [error, setError] = React.useState("");
 
   const handleTogglePassword = async () => {
     if (showPassword) {
@@ -62,15 +61,15 @@ function StaffMemberCard({ staff, onRemove }) {
             )}
           </Col>
           <Col md={3} className="text-md-end">
-            <Button
+            {/* <Button
               variant="outline-danger"
               onClick={onRemove}
               className="me-2"
             >
               Remove
-            </Button>
+            </Button> */}
             <Button 
-              variant={showPassword ? "outline-secondary" : "outline-warning"}
+              variant={showPassword ? "outline-warning" : "info"}
               onClick={handleTogglePassword}
               disabled={loading}
             >

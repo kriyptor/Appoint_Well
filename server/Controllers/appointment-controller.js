@@ -208,7 +208,6 @@ exports.userRescheduleAppointment = async (req, res) => {
             });
         }
 
-          //TODO: Add rescheduled mail service
 
 
           if(!timeDifferenceValidation(appointment.date, appointment.startTime)){
@@ -494,10 +493,14 @@ exports.getCanceledUserAppointments = async (req, res) => {
 exports.getPreviousUserAppointments = async (req, res) => {
     try {
 
+        const page = parseInt(req.query.page || 1);
+        const limit = parseInt(req.query.limit || 5);
+        const offset = (page - 1) * limit;
+
         const userId = req.user.id;
         const currentDate = new Date().toISOString().split('T')[0];
         
-        const allAppointment = await Appointments.findAll({
+        const { count, rows: allAppointment } = await Appointments.findAndCountAll({
           where: { userId: userId, [Op.or] : { date: { [Op.lt]: currentDate }, status : 'completed' } },
           include:[
             {
@@ -509,8 +512,14 @@ exports.getPreviousUserAppointments = async (req, res) => {
                 model: Reviews
             }
         ],
-          order : [['date', 'DESC']]
+        limit: limit,
+        offset: offset,
+        order : [['date', 'DESC']]
         });
+
+        const totalPages = Math.ceil(count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPreviousPage = page > 1;
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
@@ -538,7 +547,15 @@ exports.getPreviousUserAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: formatedAppointmentData
+            data: formatedAppointmentData,
+            pagination : {
+                currentPage : page,
+                itemsPerPage : limit,
+                totalItems : count,
+                totalPages : totalPages,
+                hasNextPage : hasNextPage,
+                hasPrevPage : hasPreviousPage
+            }
         });
         
     } catch (error) {
@@ -958,10 +975,15 @@ exports.getUpcomingStaffAppointments = async (req, res) => {
 exports.getPreviousStaffAppointments = async (req, res) => {
     try {
 
+        const page = parseInt(req.query.page || 1);
+        const limit = parseInt(req.query.limit || 5);
+        const offset = (page - 1) * limit;
+
+
         const staffId = req.staff.id;
         const currentDate = new Date().toISOString().split('T')[0];
         
-        const allAppointment = await Appointments.findAll({
+        const { count, rows: allAppointment } = await Appointments.findAndCountAll({
           where: { staffId: staffId, [Op.or] : [{ date: { [Op.lt]: currentDate }, status : 'completed' }] },
           include:[
             {
@@ -973,8 +995,14 @@ exports.getPreviousStaffAppointments = async (req, res) => {
                 model: Reviews
             }
         ],
-          order : [['date', 'DESC']]
+        limit: limit,
+        offset: offset,
+        order : [['date', 'DESC']]
         });
+
+        const totalPages = Math.ceil(count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPreviousPage = page > 1;
 
         const formatedAppointmentData = allAppointment.map((data) => ({
             id: data.id,
@@ -1004,7 +1032,15 @@ exports.getPreviousStaffAppointments = async (req, res) => {
         return res.status(200).json({ 
             success: true,
             message: 'All the appointments',
-            data: formatedAppointmentData
+            data: formatedAppointmentData,
+            pagination : {
+                currentPage : page,
+                itemsPerPage : limit,
+                totalItems : count,
+                totalPages : totalPages,
+                hasNextPage : hasNextPage,
+                hasPrevPage : hasPreviousPage
+            }
         });
         
     } catch (error) {

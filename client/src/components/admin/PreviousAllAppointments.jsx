@@ -21,7 +21,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
      hasPrevPage: false,
    });
  
-   const fetchCanceledAppointments = async (page=1) => {
+   const fetchPreviousAppointments = async (page=1) => {
      setLoading(true);
      setError(null);
      try {
@@ -44,11 +44,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
    }
 
     const handlePageChange = (page) => {
-      fetchCanceledAppointments(page);
+      fetchPreviousAppointments(page);
     };
 
    useEffect(() => {
-     fetchCanceledAppointments();
+     fetchPreviousAppointments();
    }, [BASE_URL, authToken]);
  
    return (

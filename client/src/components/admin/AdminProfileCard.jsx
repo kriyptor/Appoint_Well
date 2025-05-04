@@ -12,31 +12,25 @@ function AdminProfileCard({ admin, onEdit }) {
             </Card.Header>
             <Card.Body className="d-flex flex-column align-items-center">
               <img
-                src="https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+                src={admin?.profilePicture}
                 alt="Profile"
                 style={{ width: 140, height: 140, objectFit: "cover" }}
                 className="img-fluid rounded-circle mb-3"
               />
               <div className="w-100">
                 <div className="mb-3 text-center">
-                  <h5 className="mb-1">{admin.name}</h5>
+                  <h5 className="mb-1">{admin?.name}</h5>
                   <div className="text-muted mb-1">
                     <i className="bi bi-envelope me-2"></i>
-                    {admin.email}
+                    {admin?.email}
                   </div>
                   <div>
                     <span className="fw-semibold">Role: </span>
                     <Badge
-                      bg={
-                        admin.role === "admin"
-                          ? "danger"
-                          : admin.role === "staff"
-                          ? "warning"
-                          : "primary"
-                      }
+                      bg='danger'
                       className="text-capitalize"
                     >
-                      {admin.role}
+                      admin
                     </Badge>
                   </div>
                 </div>

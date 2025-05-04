@@ -6,7 +6,7 @@ const bcrypt = require(`bcrypt`);
 const jwt = require(`jsonwebtoken`);
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require(`sequelize`);
-const { comparePassword } = require("../Utils/encryption-Decryption");
+const { comparePassword, encrypt } = require("../Utils/encryption-Decryption");
 require('dotenv').config();
 
 
@@ -251,6 +251,80 @@ exports.loginAdmin = async (req, res) => {
     }
 }
 
+exports.getAdminData = async (req, res) => {
+    try {
+        
+        const adminId = req.admin.id;
+    
+        const admin = await Admin.findOne({ where: { id: adminId } });
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: `Admin does not exist!`
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Admin Data',
+            data: admin
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+exports.updateAdminData = async (req, res) => {
+    try {
+
+        const adminId = req.admin.id;
+
+        const { name, email, password, profilePicture } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(name) || isStringInvalid(email) || isStringInvalid(profilePicture)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email are required'
+            });
+        }
+
+        const updatedAdminData  = {
+            name: name,
+            email : email,
+            profilePicture : profilePicture
+        }
+
+        if(password.length !== 0){
+            const salt = 10;
+            const hashedPassword = await bcrypt.hash(password, salt);
+            updatedAdminData.password  = hashedPassword;
+        }
+        
+        const updatedAdmin = await Admin.update(updatedAdminData, { where : { id : adminId } })
+    
+        return res.status(200).json({
+            success: true,
+            message: 'Admin data updated',
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
 
 /* ----------------Staff auth------------------ */
 
@@ -323,6 +397,48 @@ exports.getStaffData = async (req, res) => {
             success: true,
             message: 'User Data',
             data: staff
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+}
+
+
+exports.updateStaffData = async (req, res) => {
+    try {
+
+        const staffId = req.staff.id;
+
+        const { name, password, profilePicture } = req.body;
+        
+        // Validate inputs
+        if (isStringInvalid(name) || isStringInvalid(profilePicture)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email are required'
+            });
+        }
+
+        const updatedStaffData  = {
+            name: name,
+            profilePicture : profilePicture
+        }
+
+        if(password.length !== 0){
+            updatedStaffData.password  = encrypt(password.trim());
+        }
+        
+        const updatedStaff = await Staff.update(updatedStaffData, { where : { id : staffId } })
+    
+        return res.status(200).json({
+            success: true,
+            message: 'staff data updated',
         });
 
     } catch (error) {
