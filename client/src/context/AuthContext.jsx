@@ -4,21 +4,12 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
 
-
-// Predefined users for testing
-const predefinedUsers = [
-  { id: 1, name: 'Rajeev', email: 'user@example.com', password: 'user123', role: 'user' },
-  { id: 2, name: 'Shivanshu', email: 'admin@example.com', password: 'admin123', role: 'admin' },
-  { id: 3, name: 'Ravi', email: 'staff@example.com', password: 'staff123', role: 'staff' }
-];
-
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   // Add redirect path state
-  const [redirectPath, setRedirectPath] = useState(null);
-  
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [redirectPath, setRedirectPath] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
   const [loading, setLoading] = useState(true);
@@ -113,13 +104,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Sign up function (in a real app, this would connect to a backend)
-  const signup = async (name, email, password, phoneNumber) => {
+  const signup = async (name, email, password) => {
     setAuthError("");
     try {
       const response = await axios.post(`${BASE_URL}/auth/user/sign-up`, {
         name,
         email,
-        phoneNumber,
         password,
       });
       if (response.status === 201) {

@@ -29,7 +29,6 @@ router.patch('/:id/reschedule/admin', authenticate(['admin']), appointmentContro
 
 router.patch('/:id/cancel/admin', authenticate(['admin']), appointmentController.adminCancelAppointment);
 
-
 /* -------Staff Routes-------- */
 
 router.get('/staff/upcoming', authenticate(['staff']), appointmentController.getUpcomingStaffAppointments);

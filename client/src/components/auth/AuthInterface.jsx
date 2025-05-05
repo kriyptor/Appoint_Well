@@ -1,56 +1,82 @@
-// src/components/AuthInterface.jsx
-import React, { useState } from 'react';
-import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 function AuthInterface() {
-  // State to toggle between sign-in and sign-up modes
   const [isSignUp, setIsSignUp] = useState(false);
-  // States for form fields
   const [role, setRole] = useState('user');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  
+  const [errorMessage, setErrorMessage] = useState('');
+
   const { login, signup, authError } = useAuth();
   const navigate = useNavigate();
 
-  // Function to reset form fields when switching modes
+  // Reset form when switching between sign-in and sign-up
+  useEffect(() => {
+    resetForm();
+  }, [isSignUp]);
+
   const resetForm = () => {
     setName('');
     setEmail('');
     setPassword('');
     setRole('user');
+    setPhoneNumber('');
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setSuccessMessage('');
+    setErrorMessage('');
     
-    if (isSignUp) {
-      await signup(name, email, password, phoneNumber);
-    } else {
-      await login(email, password, role);
+    try {
+      if (isSignUp) {
+        const isSignedUp = await signup(name, email, password);
+        if (isSignedUp) {
+          setSuccessMessage("Registration successful! Please log in.");
+          setTimeout(() => {
+            setIsSignUp(false);
+          }, 2000);
+        }
+      } else {
+        const loginSuccess = await login(email, password, role);
+        if (loginSuccess && redirectPath) {
+          navigate(redirectPath);
+        }
+      }
+    } catch (error) {
+      console.error("Error during authentication:", error);
+      setErrorMessage(error.response?.data?.message || "Authentication failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    // Remove navigation logic from here
   };
 
   return (
     <Container className="d-flex justify-content-center align-items-center mt-5">
       <Card style={{ width: "400px" }}>
         <Card.Body>
-          {/* Dynamic title based on mode */}
           <Card.Title className="text-center text-uppercase">
             {isSignUp ? "Sign Up as User" : "Sign In"}
           </Card.Title>
-
-          {/* Display auth errors */}
-          {authError && <Alert variant="danger">{authError}</Alert>}
+          {authError && (
+            <Alert variant="danger" dismissible onClose={() => setErrorMessage('')}>
+              {authError}
+            </Alert>
+          )}
+          {/* {errorMessage && <Alert variant="danger" dismissible onClose={() => setErrorMessage('')}>{errorMessage}</Alert>} */}
+          {successMessage && <Alert variant="success" dismissible onClose={() => setSuccessMessage('')}>{successMessage}</Alert>}
 
           <Form onSubmit={handleSubmit}>
-            {/* Name field (only for sign-up) */}
             {isSignUp && (
               <Form.Group controlId="formName" className="mb-3">
                 <Form.Label>Name</Form.Label>
@@ -64,7 +90,6 @@ function AuthInterface() {
               </Form.Group>
             )}
 
-            {/* Role selection (only for sign-in) */}
             {!isSignUp && (
               <Form.Group controlId="formRole" className="mb-3">
                 <Form.Label>Role</Form.Label>
@@ -80,7 +105,6 @@ function AuthInterface() {
               </Form.Group>
             )}
 
-            {/* Email field (common to both) */}
             <Form.Group controlId="formEmail" className="mb-3">
               <Form.Label>Email</Form.Label>
               <Form.Control
@@ -92,21 +116,6 @@ function AuthInterface() {
               />
             </Form.Group>
 
-            {/* Role selection (only for sign-Up) */}
-            {isSignUp && (
-              <Form.Group controlId="formPhoneNumber" className="mb-3">
-                <Form.Label>Phone Number</Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Enter your Phone Number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  required
-                />
-              </Form.Group>
-            )}
-
-            {/* Password field (common to both) */}
             <Form.Group controlId="formPassword" className="mb-3">
               <Form.Label>Password</Form.Label>
               <Form.Control
@@ -118,23 +127,26 @@ function AuthInterface() {
               />
             </Form.Group>
 
-            {/* Submit button */}
-            <Button variant="primary" type="submit" className="w-100">
-              {isSignUp ? "Sign Up" : "Sign In"}
+            <Button variant="primary" type="submit" className="w-100" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                isSignUp ? "Sign Up" : "Sign In"
+              )}
             </Button>
           </Form>
 
-          {/* Toggle between sign-in and sign-up */}
           <div className="text-center mt-3">
             {isSignUp ? (
               <span>
                 Already have an account?{" "}
                 <Button
                   variant="link"
-                  onClick={() => {
-                    setIsSignUp(false);
-                    resetForm();
-                  }}
+                  onClick={() => setIsSignUp(false)}
+                  disabled={loading}
                 >
                   Sign In
                 </Button>
@@ -144,10 +156,8 @@ function AuthInterface() {
                 Don't have an account?{" "}
                 <Button
                   variant="link"
-                  onClick={() => {
-                    setIsSignUp(true);
-                    resetForm();
-                  }}
+                  onClick={() => setIsSignUp(true)}
+                  disabled={loading}
                 >
                   Sign Up
                 </Button>
