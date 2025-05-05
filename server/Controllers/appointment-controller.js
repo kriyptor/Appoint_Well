@@ -1052,3 +1052,59 @@ exports.getPreviousStaffAppointments = async (req, res) => {
         });
     }
 }
+
+
+/* exports.getAppoint = async (req, res) => {
+    try {
+
+        const tomorrow = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        const reminderAppointments = await Appointments.findAll({
+            where: {
+                status: { [Op.in]: ["scheduled", "rescheduled"] },
+                date: { [Op.eq]: tomorrow }
+            },
+            include: [{
+                model: Users,
+                required: true,
+                attributes: ['name', 'email']
+            }],
+            attributes: [
+                'id', 'status', 'date', 'startTime', 'serviceId',
+                'serviceName', 'staffId', 'staffName', 'userId',
+                'refundStatus', 'price'
+            ]
+        });
+
+        const formatedData = reminderAppointments.map((data) => ({
+            id: data.id,
+            status: data.status,
+            date: data.date,
+            startTime: data.startTime,
+            serviceId: data.serviceId,
+            serviceTitle: data.serviceName,
+            staff: data.staffId,
+            staffName: data.staffName,
+            userId: data.userId,
+            userName: data.User ? data.User.name : 'Unknown User',
+            userEmail: data.User ? data.User.email : 'unknown@example.com',
+            refundStatus: data.refundStatus,
+            price: data.price,
+        }));
+
+        return res.status(200).json({ 
+            success: true,
+            message: 'All Staffs',
+            data: formatedData
+        });
+
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+} */

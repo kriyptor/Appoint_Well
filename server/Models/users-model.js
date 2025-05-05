@@ -23,11 +23,11 @@ const Users = db.define(`Users`, {
         allowNull: false
     },
 
-    phoneNumber : {
+    /* phoneNumber : {
         type : Sequelize.BIGINT,
         allowNull : false,
         defaultValue: 123456789
-    },
+    }, */
 
     profilePicture: {
         type: Sequelize.TEXT,

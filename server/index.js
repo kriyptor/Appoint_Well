@@ -140,7 +140,7 @@ db.sync(/* { force : true } */)
   .then(() => {
     console.log(`Connected with DB!`);
     /* --------------CRON JOB--------------- */
-    /* scheduleTasks(); */
+    scheduleTasks();
     app.listen(PORT, () => console.log(`Server running @ PORT:${PORT}`));
   })
   .catch((err) => {
