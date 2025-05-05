@@ -131,7 +131,7 @@ exports.userCreateAppointment = async (req, res) => {
         };
  */
         // Validate email data
-        /* if (!name || !email) {
+        if (!name || !email) {
             console.warn('Missing user email information:', { name, email });
             // Continue with appointment creation but log the warning
         } else {
@@ -155,7 +155,7 @@ exports.userCreateAppointment = async (req, res) => {
                 console.error('Error sending confirmation email:', emailError);
                 // Don't throw error, allow appointment creation to continue
             }
-        } */
+        }
 
         await transaction.commit();
 
@@ -232,7 +232,7 @@ exports.userRescheduleAppointment = async (req, res) => {
             price: appointment.price,
         };
 
-       /*  if (!name || !email) {
+        if (!name || !email) {
             console.warn('Missing user email information:', { name, email });
         }
         else {
@@ -255,7 +255,7 @@ exports.userRescheduleAppointment = async (req, res) => {
             } catch (emailError) {
                 console.error('Error sending rescheduled email:', emailError);
             }
-        } */
+        }
 
         return res.status(200).json({
             success: true,
@@ -352,7 +352,7 @@ exports.userCancelAppointment = async (req, res) => {
             refundStatus: appointment.refundStatus
         };
 
-        /* if (!name || !email) {
+        if (!name || !email) {
             console.warn('Missing user email information:', { name, email });
         }
         else {
@@ -374,7 +374,7 @@ exports.userCancelAppointment = async (req, res) => {
             } catch (emailError) {
                 console.error('Error sending cancellation email:', emailError);
             }
-        } */
+        }
 
         return res.status(200).json({
             success: true,

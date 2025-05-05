@@ -48,6 +48,11 @@ app.use(bodyParser.json());
 
 /* ----------API Routes---------- */
 
+app.use('/', (req, res) => {
+  res.send('Welcome to AppointWell API');
+});
+
+
 app.use(`${process.env.API_URL}/auth`, authRouter);
 app.use(`${process.env.API_URL}/staff`, staffRouter);
 app.use(`${process.env.API_URL}/review`, reviewRouter);
@@ -118,7 +123,7 @@ db.sync(/* { force : true } */)
   .then(() => {
     console.log(`Connected with DB!`);
     /* --------------CRON JOB--------------- */
-    /* scheduleTasks(); */
+    scheduleTasks();
     app.listen(PORT, () => console.log(`Server running @ PORT:${PORT}`));
   })
   .catch((err) => {
