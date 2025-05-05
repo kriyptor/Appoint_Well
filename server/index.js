@@ -110,28 +110,6 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 }
 createData() */
 
-// Test email with proper parameters
-/* sendMail(
-    "Test User",
-    "raajaag14@gmail.com",
-    "Test Subject",
-    "Confirmed",
-    {
-        serviceName: "Test Service",
-        date: "2024-05-01",
-        startTime: "10:00 AM",
-        staffName: "Test Staff",
-        price: "₹500"
-    }
-)s
-.then(response => {
-    console.log('Email response:', response);
-})
-.catch(error => {
-    console.error('Email error:', error);
-}); */
-
-
 
 
 /* -------Sync the database------- */
