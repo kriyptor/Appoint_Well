@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require(`express`);
 const cors = require(`cors`);
 const db = require(`./Utils/database`);
@@ -24,7 +26,7 @@ const { sendMail } = require('./Utils/mail-service');
 
 
 
-require('dotenv').config();
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -48,9 +50,6 @@ app.use(bodyParser.json());
 
 /* ----------API Routes---------- */
 
-app.use('/', (req, res) => {
-  res.send('Welcome to AppointWell API');
-});
 
 
 app.use(`${process.env.API_URL}/auth`, authRouter);
@@ -113,8 +112,8 @@ Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
     totalRefunds : 0
   })
 }
-createData() */
-
+createData()
+ */
 
 
 /* -------Sync the database------- */
