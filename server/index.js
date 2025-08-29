@@ -60,6 +60,14 @@ app.use(`${process.env.API_URL}/service`, serviceRouter);
 app.use(`${process.env.API_URL}/appointment`, appointmentRouter);
 
 
+app.get(`${process.env.API_URL}/health`, (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "APPOINT-WELL API Is Running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 /* --------------User Associations---------------- */
 
 Users.hasMany(Appointments, { foreignKey: `userId`, onDelete: `CASCADE` });
@@ -93,7 +101,6 @@ Appointments.belongsTo(Services, { foreignKey: `serviceId`});
 Appointments.hasOne(Reviews, { foreignKey: `appointmentsId`, onDelete: `CASCADE` });
 Reviews.belongsTo(Appointments, { foreignKey: `appointmentsId` });
 
-//TODO:create admin and revenue data
 
 /* async function createData() {
   await Admin.create({
