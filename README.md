@@ -3,6 +3,9 @@
 A full-stack appointment booking application for salons, featuring user, staff, and admin interfaces, appointment management, reminders, and secure authentication.
 
 ---
+### My Project
+
+Check out this demo video: [Watch the demo video on Google Drive](https://drive.google.com/file/d/1SAFsmR8-TUtK3YXHFlq9iFu5GpygzwWG/view?usp=sharing)
 
 ## Getting Started
 
